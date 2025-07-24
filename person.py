@@ -43,6 +43,9 @@ class Person:
 
     def get_age(self):
         return relativedelta(state.current_date, self.birthday).years
+    
+    def chance_to_die(self):
+        
 
     
 

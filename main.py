@@ -15,7 +15,7 @@ p1 = Person(
     mother_id=242,
     INN=98398,
     SNILS=83978130,
-    
+
     birth_year=2006,
     birth_month=2,
     birth_day=12,
@@ -26,7 +26,8 @@ p1 = Person(
     work_place='police',
     cocity_state=1,
     criminal_record=False,
-    credit_score=999
+    credit_score=999,
+    partner_id=2
 )
 
 p2 = Person(
@@ -50,15 +51,10 @@ p2 = Person(
     work_place='post',
     cocity_state=2,
     criminal_record=True,
-    credit_score=950
+    credit_score=950,
+    partner_id=1
 )
 
 state.people.append(p1)
 state.people.append(p2)
 
-
-while True:
-    print(state.current_date)
-    print(len(state.people))
-    time.sleep(1)
-    end_day()
