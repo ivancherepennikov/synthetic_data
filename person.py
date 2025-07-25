@@ -2,7 +2,7 @@ import datetime
 import state
 from dateutil.relativedelta import relativedelta
 from random import random, randint, shuffle, choice
-from names import male_names, female_names
+from names import male_names, female_names, last_names
 
 class Person:
     def __init__(self, id, sex, first_name, last_name, patroyomic, father_id, mother_id, INN, SNILS, 
@@ -69,7 +69,11 @@ class Person:
         print(f"{self.first_name} {self.last_name} умер в возрасте {self.get_age()}")
 
     def try_get_education(self):
-        if self.eduсation == 'HIGH SCHOOL' and self.get_age() >= 18:
+        if self.get_age() == 15:
+            self.eduсation = 'School'
+        if self.get_age() == 17 and random() > 0.6:
+            self.eduсation = 'HIGH SCHOOL'
+        elif self.eduсation == 'HIGH SCHOOL' and self.get_age() >= 18:
             r = random()
             if r < 0.4:
                 self.eduсation = 'College'
@@ -162,15 +166,27 @@ class Person:
             )
             state.people.append(child)
 
-            print(f"Родился ребенок: {first_name} {child.last_name}")
-            print(f"Родители: {self.id} и {partner.id}")
-
     def count_children_with_partner(self):
-        return sum(
-            1 for person in state.people
-            if ((person.father_id == self.id and person.mother_id == self.partner_id) or
-                (person.mother_id == self.id and person.father_id == self.partner_id))
-        )
+        count = 0
+        for person in state.people:
+            is_child = (
+                (person.father_id == self.id and person.mother_id == self.partner_id) or
+                (person.mother_id == self.id and person.father_id == self.partner_id)
+            )
+            if is_child:
+                father = None
+                if person.father_id is not None:
+                    father = next((p for p in state.people if p.id == person.father_id), None)
+                
+                if father:
+                    person.patroyomic = generate_patronymic(father.first_name, person.sex)
+                    if person.sex == 'male':
+                        person.last_name = father.last_name
+                    else:
+                        person.last_name = father.last_name + 'a'
+                count += 1
+        return count
+
 
     def try_go_to_prison(self):
         if not self.criminal_record and random() < 0.01 and self.get_age() > 14:

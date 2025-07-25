@@ -4,7 +4,7 @@ from dateutil.relativedelta import relativedelta
 from person import(
     Person
 )
-from names import male_names, female_names
+from names import male_names, female_names, patronymics_male, patronymics_female, last_names
 import datetime
 from tabulate import tabulate
 
@@ -13,17 +13,20 @@ def end_month():
     state.current_date += relativedelta(months = 1) 
 
 
-
 def random_name(sex):
     return choice(male_names) if sex == 'male' else choice(female_names)
 
-def generate_patronymic(parent_name, sex):
-    return parent_name + ('ovich' if sex == 'male' else 'ovna')
+def generate_patronymic(father_name, sex):
+    if sex == 'male' and father_name in patronymics_male:
+        return patronymics_male[father_name]
+    elif sex == 'female' and father_name in patronymics_female:
+        return patronymics_female[father_name]
+
 
 def generate_random_person(id):
     sex = choice(['male', 'female'])
     first_name = random_name(sex)
-    last_name = f"Lastname{id}"
+    last_name = choice(last_names)
     patroyomic = generate_patronymic('Vasiliy', sex)
 
     age = randint(18, 70)
@@ -66,8 +69,9 @@ def display_people_table():
         credit_display = "-" if p.dead else p.credit_score
         table_data.append([
             p.id,
-            p.first_name,
             p.last_name,
+            p.first_name,
+            p.patroyomic,
             p.get_age(),
             p.father_id,
             p.mother_id,
@@ -79,6 +83,6 @@ def display_people_table():
             credit_display,
         ])
     
-    headers = ["ID", "Имя", "Фамилия", "Возраст", "Отец", "Мать", "Образование", "Доход", "Работа", "Судимость", "Мертв", "Кредит"]
+    headers = ["ID", "Фамилия", "Имя", "Отчество", "Возраст", "Отец", "Мать", "Образование", "Доход", "Работа", "Судимость", "Мертв", "Кредит"]
     print(tabulate(table_data, headers=headers, tablefmt="fancy_grid"))
 

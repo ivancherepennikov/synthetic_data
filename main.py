@@ -67,7 +67,8 @@ for i in range(3, 101):
     state.people.append(person)
 
 
-for month in range(12 * 20):
+#main curcle
+for month in range(12 * 30):
     print(state.current_date)
     for person in list(state.people):  
         if not person.dead:
