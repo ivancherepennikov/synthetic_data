@@ -21,13 +21,22 @@ def generate_patronymic(father_name, sex):
         return patronymics_male[father_name]
     elif sex == 'female' and father_name in patronymics_female:
         return patronymics_female[father_name]
+    
+
+def generate_random_patronymic(sex):
+    if sex == 'male':
+        return choice(list(patronymics_male.values()))
+    else:
+        return choice(list(patronymics_female.values()))
 
 
 def generate_random_person(id):
     sex = choice(['male', 'female'])
     first_name = random_name(sex)
     last_name = choice(last_names)
-    patroyomic = generate_patronymic('Vasiliy', sex)
+    if sex == "female":
+        last_name += 'a'
+    patroyomic = generate_random_patronymic(sex)
 
     age = randint(18, 70)
     birth_date = state.current_date - datetime.timedelta(days=365 * age)
@@ -76,13 +85,13 @@ def display_people_table():
             p.father_id,
             p.mother_id,
             p.eduсation,
-            p.income,
-            p.work_place,
-            "Да" if p.criminal_record else "Нет",
-            "Да" if p.dead else "Нет",
+            p.income if not p.dead else "died",
+            p.work_place if not p.dead else "died",
+            "yes" if p.pension else "no",
+            "yes" if p.criminal_record else "no",
             credit_display,
         ])
     
-    headers = ["ID", "Фамилия", "Имя", "Отчество", "Возраст", "Отец", "Мать", "Образование", "Доход", "Работа", "Судимость", "Мертв", "Кредит"]
+    headers = ["ID", "Фамилия", "Имя", "Отчество", "Возраст", "Отец", "Мать", "Образование", "Доход", "Работа", "Пенсия", "Судимость", "Кредит"]
     print(tabulate(table_data, headers=headers, tablefmt="fancy_grid"))
 

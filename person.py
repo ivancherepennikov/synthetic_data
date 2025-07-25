@@ -33,6 +33,7 @@ class Person:
         self.death_date = None
         self.last_job_change_date = state.current_date
         self.prison_release_date = None
+        self.pension = False
 
     def get_age(self):
         return relativedelta(state.current_date, self.birthday).years
@@ -54,6 +55,7 @@ class Person:
         self.try_have_children()
         self.try_go_to_prison()
         self.update_credit_score()
+        self.go_to_pension()
 
     def check_death(self, age):
         if age < 50:
@@ -81,6 +83,10 @@ class Person:
                 self.eduсation = 'University'
 
     def try_change_job(self):
+        if self.pension:
+            return
+        if random() <= 0.75:
+            return
         if self.get_age() < 14 or self.criminal_record:
             return
         days_since_last_change = (state.current_date - self.last_job_change_date).days
@@ -88,15 +94,17 @@ class Person:
             return
         if 14 <= self.get_age() < 18 and randint(1,5) != 2:
             return
+
+
         chance = randint(1,4)
-        if chance == 1 and self.eduсation in ['HIGH SCHOOL', 'College', 'University']:
+        if chance == 1 and self.eduсation in ['College', 'University']:
             self.work_place = 'IT-компания'
-            delta = randint(10000, 20000)
+            delta = randint(12000, 20000)
             self.income += delta
             self.last_job_change_date = state.current_date
         elif chance == 2:
             self.work_place = 'Завод'
-            delta = randint(3000, 9000)
+            delta = randint(2000, 4000)
             self.income += delta
             self.last_job_change_date = state.current_date
         if chance == 3 and self.eduсation in ['HIGH SCHOOL', 'College', 'University']:
@@ -131,7 +139,7 @@ class Person:
         if existing_children >= 3:
             return
 
-        if random() < 0.01:
+        if random() < 0.02:
             partner = next((p for p in state.people if p.id == self.partner_id), None)
             if not partner:
                 return
@@ -161,7 +169,7 @@ class Person:
                 work_place=None,
                 cocity_state=self.cocity_state,
                 criminal_record=False,
-                credit_score=500,
+                credit_score=None,
                 partner_id=None
             )
             state.people.append(child)
@@ -189,31 +197,59 @@ class Person:
 
 
     def try_go_to_prison(self):
-        if not self.criminal_record and random() < 0.01 and self.get_age() > 14:
+        if not self.criminal_record and random() < 0.005 and self.get_age() > 14:
             self.criminal_record = True
             sentence_years = randint(2, 5)
             self.prison_release_date = state.current_date + relativedelta(years=sentence_years)
-            print(f"{self.id} попал в тюрьму на {sentence_years} лет")
 
     def check_prison_release(self):
         if self.criminal_record and self.prison_release_date and state.current_date >= self.prison_release_date:
             self.criminal_record = False
             self.prison_release_date = None
-            print(f"{self.id} вышел из тюрьмы")
 
     def update_credit_score(self):
+        if self.get_age() <= 14:
+            self.credit_score = 0
+            return
         score = 500
         if self.partner_id: score += 20
         if self.eduсation == 'College': score += 30
         elif self.eduсation == 'University': score += 50
-        score += int(self.income / 800)
-        if self.criminal_record: score -= 200
+        score += int(self.income / 1000)
+        if self.criminal_record: score -= 300
         if self.dead: score = 0
         self.credit_score = max(score, 0)
         self.credit_score = min(score, 999)
+
+    def go_to_pension(self):
+        if self.pension:
+            return
+        
+        if self.get_age() >= 65 and self.sex == 'male' and random() >= 0.85:
+            self.pension = True
+        elif self.get_age() >= 70 and self.sex == 'male' and random() >= 0.55:
+            self.pension = True
+        elif self.get_age() >= 75 and self.sex == 'male' and random() >= 0.25:
+            self.pension = True
+        elif self.get_age() >= 80 and self.sex == 'male' and random() >= 0.01:
+            self.pension = True
+
+        elif self.get_age() >= 60 and self.sex == 'female' and random() >= 0.85:
+            self.pension = True
+        elif self.get_age() >= 65 and self.sex == 'female' and random() >= 0.55:
+            self.pension = True
+        elif self.get_age() >= 70 and self.sex == 'female' and random() >= 0.25:
+            self.pension = True
+        elif self.get_age() >= 75 and self.sex == 'female' and random() >= 0.01:
+            self.pension = True
+
+        if self.pension:
+            self.work_place = 'pension'
+            self.income = 15000 + self.income*0.01
 
 def random_name(sex):
     return choice(male_names) if sex == 'male' else choice(female_names)
 
 def generate_patronymic(parent_name: str, child_sex: str):
     return parent_name + 'ovich' if child_sex == 'male' else parent_name + 'ovna'
+
