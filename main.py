@@ -73,7 +73,7 @@ alive_count = []
 dead_count = []
 
 # --- Главный цикл ---
-for month in range(12 * 100):  # 100 лет
+for month in range(12 * 30):
     print(state.current_date)
     for person in list(state.people):  
         if not person.dead:

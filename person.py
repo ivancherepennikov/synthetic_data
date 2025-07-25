@@ -96,27 +96,40 @@ class Person:
             return
 
 
+        if self.get_age() >= 50:
+            k = - 1
+        else:
+            k = 1
+
         chance = randint(1,4)
         if chance == 1 and self.eduсation in ['College', 'University']:
             self.work_place = 'IT-компания'
-            delta = randint(12000, 20000)
-            self.income += delta
+            if self.income <= 600000:
+                delta = randint(12000, 15000)
+            else:
+                delta = randint(30000, 50000)
+            self.income += delta * k
             self.last_job_change_date = state.current_date
         elif chance == 2:
             self.work_place = 'Завод'
             delta = randint(2000, 4000)
-            self.income += delta
+            self.income += delta * k
             self.last_job_change_date = state.current_date
         if chance == 3 and self.eduсation in ['HIGH SCHOOL', 'College', 'University']:
             self.work_place = 'Госслужба'
-            delta = randint(5000, 15000)
-            self.income += delta
+            if self.income <= 400000:
+                delta = randint(5000, 15000)
+            else:
+                delta = randint(1000,2000)
+            self.income += delta * k
             self.last_job_change_date = state.current_date
         if chance == 4:
             self.work_place = 'Фриланс'
-            delta = randint(1000, 30000)
-            self.income += delta
+            delta = randint(1000, 10000)
+            self.income += delta * k
             self.last_job_change_date = state.current_date
+
+        self.income = max(0, self.income)
 
 
     def try_to_marry(self):
