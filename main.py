@@ -1,9 +1,13 @@
 from person import Person
 import state
 from global_function import(
-    end_day
+    end_month,generate_random_person, display_people_table
 )
 import time
+import sys
+
+sys.stdout = open("output.txt", "w", encoding="utf-8")
+
 
 p1 = Person(
     id=1,
@@ -35,7 +39,7 @@ p2 = Person(
     sex='female',
     first_name='Anna',
     last_name='Ivanova',
-    patroyomic='Petrvna',
+    patroyomic='Petrovna',
     father_id=23555,
     mother_id=212,
     INN=92221,
@@ -57,4 +61,20 @@ p2 = Person(
 
 state.people.append(p1)
 state.people.append(p2)
+
+for i in range(3, 101):
+    person = generate_random_person(i)
+    state.people.append(person)
+
+
+for month in range(12 * 20):
+    print(state.current_date)
+    for person in list(state.people):  
+        if not person.dead:
+            person.tick()
+    
+    display_people_table()
+    end_month()
+
+sys.stdout.close()
 
