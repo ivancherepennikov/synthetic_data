@@ -1,7 +1,7 @@
 male_names = [
     'Ivan', 'Aleksey', 'Konstantin', 'Dmitriy', 'Kirill',
     'Nikolay', 'Maksim', 'Sergey', 'Andrey', 'Vladimir',
-    'Pavel', 'Yuriy', 'Egor', 'Oleg', 'Timofey'
+    'Pavel', 'Yuriy', 'Egor', 'Oleg', 'Timofey', "BORIS"
 ]
 
 female_names = [
@@ -25,7 +25,8 @@ patronymics_male = {
     'Yuriy': 'Yurievich',
     'Egor': 'Egorovich',
     'Oleg': 'Olegovich',
-    'Timofey': 'Timofeevich'
+    'Timofey': 'Timofeevich',
+    "BORIS": "BORISOVICH"
 }
 
 patronymics_female = {
@@ -43,7 +44,8 @@ patronymics_female = {
     'Yuriy': 'Yurievna',
     'Egor': 'Egorovna',
     'Oleg': 'Olegovna',
-    'Timofey': 'Timofeevna'
+    'Timofey': 'Timofeevna',
+    "BORIS": "BORISOVNA"
 }
 
 last_names = [
