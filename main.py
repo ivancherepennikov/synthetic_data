@@ -82,12 +82,9 @@ for month in range(12 * 30):
     # Сбор статистики раз в год (оптимизация)
     if state.current_date.month == 1:
         current_alive = 0
-        current_dead = 0
 
         for p in state.people:
-            if p.dead:
-                current_dead += 1
-            else:
+            if not p.dead:
                 current_alive += 1
                 age = p.get_age()
                 age_list.append(age)
@@ -95,7 +92,7 @@ for month in range(12 * 30):
                 credit_by_age.append(p.credit_score)
 
         alive_count.append(current_alive)
-        dead_count.append(current_dead)
+
     
     display_people_table()
     end_month()
@@ -119,15 +116,15 @@ plt.xlabel("Age")
 plt.ylabel("Credit Score")
 plt.title("Кредитный рейтинг по возрасту")
 
-# Живые и мертвые по годам
+# Живые по годам
 plt.subplot(2, 1, 2)
 years = list(range(len(alive_count)))
 plt.plot(years, alive_count, label="Живые", color='green')
-plt.plot(years, dead_count, label="Мертвые", color='red')
 plt.xlabel("Годы симуляции")
-plt.ylabel("Количество людей")
-plt.title("Статистика живых / мертвых")
+plt.ylabel("Количество живых людей")
+plt.title("Статистика количества живых")
 plt.legend()
+
 
 plt.tight_layout()
 plt.savefig("stats.png", dpi=200)

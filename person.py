@@ -59,9 +59,9 @@ class Person:
 
     def check_death(self, age):
         if age < 50:
-            return random() < 0.0005
+            return random() < 0.001
         elif age < 70:
-            return random() < 0.005
+            return random() < 0.01
         else:
             return random() < (0.05 + (age - 70) * 0.005)
 
@@ -133,7 +133,7 @@ class Person:
 
 
     def try_to_marry(self):
-        if self.partner_id is not None or self.criminal_record and self.get_age() >= 18:
+        if self.partner_id is not None or self.criminal_record and self.get_age() >= 16:
             return
         candidates = [p for p in state.people if p.id != self.id and p.partner_id is None and not p.dead and not p.criminal_record and p.get_age() > 18]
         shuffle(candidates)
@@ -152,7 +152,7 @@ class Person:
         if existing_children >= 3:
             return
 
-        if random() < 0.02:
+        if random() < 0.015:
             partner = next((p for p in state.people if p.id == self.partner_id), None)
             if not partner:
                 return
@@ -258,11 +258,10 @@ class Person:
 
         if self.pension:
             self.work_place = 'pension'
-            self.income = 15000 + self.income*0.01
+            self.income = 15000 + self.income*0.1
 
 def random_name(sex):
     return choice(male_names) if sex == 'male' else choice(female_names)
 
 def generate_patronymic(parent_name: str, child_sex: str):
     return parent_name + 'ovich' if child_sex == 'male' else parent_name + 'ovna'
-

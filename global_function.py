@@ -38,13 +38,19 @@ def generate_random_person(id):
         last_name += 'a'
     patroyomic = generate_random_patronymic(sex)
 
-    age = randint(18, 70)
+    age = randint(1, 70)
     birth_date = state.current_date - datetime.timedelta(days=365 * age)
     
-    education = choice(['School', 'HIGH SCHOOL', 'College', 'University'])
-    income = randint(10000, 100000)
-    work_place = choice(['Завод', 'IT-компания', 'Госслужба', 'Фриланс', None])
-    criminal = random() < 0.05
+    if age >= 18:
+        education = choice(['School', 'HIGH SCHOOL', 'College', 'University'])
+        income = randint(10000, 100000)
+        work_place = choice(['Завод', 'IT-компания', 'Госслужба', 'Фриланс', None])
+        criminal = random() < 0.05
+    else:
+        education = None
+        income = 0
+        work_place = None
+        criminal = False
 
     person = Person(
         id=id,
