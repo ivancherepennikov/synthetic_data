@@ -1,7 +1,7 @@
 import datetime
 import state
 from dateutil.relativedelta import relativedelta
-from random import random, randint, shuffle, choice
+from random import random, randint, shuffle, choice, uniform
 from names import male_names, female_names, last_names
 
 class Person:
@@ -105,11 +105,32 @@ class Person:
 
     def check_death(self, age):
         if age < 50:
-            return random() < 0.0007
+            base_death_chance = 0.0007
         elif age < 70:
-            return random() < 0.007
+            base_death_chance = 0.007
         else:
-            return random() < (0.05 + (age - 70) * 0.003)
+            base_death_chance = 0.05 + (age - 70) * 0.003
+
+        wealth_modifier = 1.0
+        
+        if self.income > 100000:
+            wealth_modifier -= 0.1
+        elif self.income < 20000:
+            wealth_modifier += 0.05
+
+        if self.balance > 500000:
+            wealth_modifier -= 0.1
+        elif self.balance < 10000:
+            wealth_modifier += 0.05
+
+        if self.debt > 200000:
+            wealth_modifier += 0.1
+
+        wealth_modifier = max(0.7, min(1.3, wealth_modifier))
+
+        death_chance = base_death_chance * wealth_modifier
+        return random() < death_chance
+
 
     def die(self):
         self.dead = True
@@ -352,19 +373,30 @@ class Person:
             self.criminal_record = True
 
     def update_credit_score(self):
-        if self.get_age() <= 14:
+        if self.get_age() <= 14 or self.dead:
             self.credit_score = 0
             return
+
         score = 300
-        if self.partner_id: score += 20
-        if self.eduсation == 'College': score += 30
-        elif self.eduсation == 'University': score += 50
-        score += int(self.income / 1000)
-        score += int(self.balance / 1000000)
+
+        if self.eduсation == 'College':
+            score += 30
+        elif self.eduсation == 'University':
+            score += 50
+
+        if self.partner_id:
+            score += 20
+
+        score += int(self.income / 2000) 
+        score += int(self.balance / 500000)
         score -= int(self.debt / 100000)
-        if self.criminal_record: score -= 300
-        if self.dead: score = 0
-        self.credit_score = min(max(score, 0), 999)
+
+        if self.criminal_record:
+            score -= 200
+
+        score = min(max(score, 0), 999)
+        self.credit_score = score
+
 
     def go_to_pension(self):
         if self.pension:
@@ -390,7 +422,7 @@ class Person:
 
         if self.pension:
             self.work_place = 'pension'
-            self.income = 15000 + self.max_income*0.3
+            self.income = 15000 + self.max_income*0.4
 
 
     #debt
@@ -416,7 +448,11 @@ class Person:
             print(f"{self.first_name} {self.last_name} выплатил по кредиту: {payment:.2f}")
 
     def add_procent(self):
-        self.balance = self.balance + (self.balance * state.key_court * 0.85)
+        self.balance = self.balance + (self.balance * state.key_court * 0.825)
+        self.balance *= uniform(0.9, 1.1)
+
+    def index_salary(self):
+        self.income *= (1 + state.salary_up)
 
 def random_name(sex):
     return choice(male_names) if sex == 'male' else choice(female_names)
