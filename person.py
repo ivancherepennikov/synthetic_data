@@ -415,6 +415,9 @@ class Person:
             self.debt -= payment
             print(f"{self.first_name} {self.last_name} выплатил по кредиту: {payment:.2f}")
 
+    def add_procent(self):
+        self.balance = self.balance + (self.balance * state.key_court * 0.9)
+
 def random_name(sex):
     return choice(male_names) if sex == 'male' else choice(female_names)
 

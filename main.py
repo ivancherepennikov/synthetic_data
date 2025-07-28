@@ -71,6 +71,8 @@ income_by_age = []
 credit_by_age = []
 alive_count = []
 dead_count = []
+net_worth_stats = []  # Список для хранения дельты (баланс - долг)
+net_worth_by_age = []  # Список для хранения дельты по возрастам
 
 # --- Главный цикл ---
 for month in range(12 * 30):
@@ -82,6 +84,7 @@ for month in range(12 * 30):
     # Сбор статистики раз в год (оптимизация)
     if state.current_date.month == 1:
         current_alive = 0
+        total_net_worth = 0  # Общая чистая стоимость всех живых
 
         for p in state.people:
             if not p.dead:
@@ -90,9 +93,16 @@ for month in range(12 * 30):
                 age_list.append(age)
                 income_by_age.append(p.income)
                 credit_by_age.append(p.credit_score)
+                
+                # Рассчитываем чистую стоимость (баланс - долг)
+                net_worth = p.balance - p.debt
+                net_worth_by_age.append((age, net_worth))
+                total_net_worth += net_worth
 
         alive_count.append(current_alive)
-
+        # Средняя чистая стоимость на человека
+        avg_net_worth = total_net_worth / current_alive if current_alive > 0 else 0
+        net_worth_stats.append(avg_net_worth)
     
     display_people_table()
     end_month()
@@ -100,31 +110,42 @@ for month in range(12 * 30):
 sys.stdout.close()
 
 # --- Построение графиков ---
-fig, axs = plt.subplots(1, 2, figsize=(16, 6), constrained_layout=True)
+plt.figure(figsize=(16, 7))
 
 # График 1 — Возраст и доход
-axs[0].scatter(age_list, income_by_age, alpha=0.3, color='green')
-axs[0].set_xlabel("Возраст")
-axs[0].set_ylabel("Доход")
-axs[0].set_title("Доход по возрасту")
+plt.subplot(2, 2, 1)
+plt.scatter(age_list, income_by_age, alpha=0.3, color='green')
+plt.xlabel("Возраст")
+plt.ylabel("Доход")
+plt.title("Доход по возрасту")
 
 # График 2 — Возраст и кредит
-axs[1].scatter(age_list, credit_by_age, alpha=0.3, color='blue')
-axs[1].set_xlabel("Возраст")
-axs[1].set_ylabel("Кредитный рейтинг")
-axs[1].set_title("Кредитный рейтинг по возрасту")
+plt.subplot(2, 2, 2)
+plt.scatter(age_list, credit_by_age, alpha=0.3, color='blue')
+plt.xlabel("Возраст")
+plt.ylabel("Кредитный рейтинг")
+plt.title("Кредитный рейтинг по возрасту")
 
-# Сохраняем и показываем
-plt.savefig("stats.png", dpi=200)
-plt.show()
-
-'''
-# Живые по годам
-plt.subplot(2, 1, 2)
+# График 3 — Живые по годам
+plt.subplot(2, 2, 3)
 years = list(range(len(alive_count)))
 plt.plot(years, alive_count, label="Живые", color='green')
 plt.xlabel("Годы симуляции")
 plt.ylabel("Количество живых людей")
 plt.title("Статистика количества живых")
 plt.legend()
-'''
+
+# График 4 — Чистая стоимость по возрастам и средняя по годам
+plt.subplot(2, 2, 4)
+# Разделяем данные по возрастам для scatter plot
+ages_net = [x[0] for x in net_worth_by_age]
+net_worths = [x[1] for x in net_worth_by_age]
+plt.scatter(ages_net, net_worths, alpha=0.3, color='purple', label="По возрастам")
+plt.xlabel("Возраст")
+plt.ylabel("Чистая стоимость (баланс - долг)")
+plt.title("дельта по возрастам")
+
+
+plt.tight_layout()
+plt.savefig("stats.png", dpi=200)
+plt.show()
