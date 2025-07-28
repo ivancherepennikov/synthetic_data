@@ -72,7 +72,7 @@ def generate_random_person(id):
         work_place=work_place,
         cocity_state=randint(1, 10),
         criminal_record=criminal,
-        credit_score=500,
+        credit_score=300,
         partner_id=None
     )
     return person
