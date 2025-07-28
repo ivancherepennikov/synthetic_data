@@ -75,7 +75,7 @@ net_worth_stats = []  # Список для хранения дельты (ба�
 net_worth_by_age = []  # Список для хранения дельты по возрастам
 
 # --- Главный цикл ---
-for month in range(12 * 30):
+for month in range(12 * 100):
     print(state.current_date)
     for person in list(state.people):  
         if not person.dead:

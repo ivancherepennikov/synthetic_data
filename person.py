@@ -100,6 +100,7 @@ class Person:
         self.check_and_take_loan()
         self.apply_loan_interest()
         self.repay_loan()
+        self.add_procent()
 
 
     def check_death(self, age):
@@ -269,14 +270,14 @@ class Person:
                 break
 
     def try_have_children(self):
-        if self.partner_id is None or self.get_age() < 20 or self.get_age() > 40 or self.criminal_record:
+        if self.partner_id is None or self.get_age() < 16 or self.get_age() > 50 or self.criminal_record:
             return
 
         existing_children = self.count_children_with_partner()
         if existing_children >= 3:
             return
 
-        if random() < 0.01:
+        if random() < 0.005:
             partner = next((p for p in state.people if p.id == self.partner_id), None)
             if not partner:
                 return
@@ -360,11 +361,10 @@ class Person:
         elif self.eduсation == 'University': score += 50
         score += int(self.income / 1000)
         score += int(self.balance / 1000000)
-        score -= int(self.debt / 10000000)
+        score -= int(self.debt / 100000)
         if self.criminal_record: score -= 300
         if self.dead: score = 0
-        self.credit_score = max(score, 0)
-        self.credit_score = min(score, 999)
+        self.credit_score = min(max(score, 0), 999)
 
     def go_to_pension(self):
         if self.pension:
@@ -416,7 +416,7 @@ class Person:
             print(f"{self.first_name} {self.last_name} выплатил по кредиту: {payment:.2f}")
 
     def add_procent(self):
-        self.balance = self.balance + (self.balance * state.key_court * 0.9)
+        self.balance = self.balance + (self.balance * state.key_court * 0.85)
 
 def random_name(sex):
     return choice(male_names) if sex == 'male' else choice(female_names)
