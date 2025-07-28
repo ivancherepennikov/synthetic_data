@@ -77,11 +77,24 @@ def generate_random_person(id):
     )
     return person
 
-
 def display_people_table():
     table_data = []
     for p in state.people:
-        credit_display = "-" if p.dead else p.credit_score
+        if p.dead:
+            income_display = f"died ({p.death_date.strftime('%Y-%m-%d')})"
+            work_display = '-'
+            credit_display = "-"
+            balance_display = "-"
+        else:
+            income_display = f"{int(p.income):,}".replace(',', ' ')
+            work_display = p.work_place
+            balance_display = f"{int(p.balance):,}".replace(',', ' ')
+            
+            if p.credit_score is not None:
+                credit_display = f"{int(p.credit_score):,}".replace(',', ' ')
+            else:
+                credit_display = "-"
+
         table_data.append([
             p.id,
             p.last_name,
@@ -91,13 +104,13 @@ def display_people_table():
             p.father_id,
             p.mother_id,
             p.eduсation,
-            p.income if not p.dead else "died",
-            p.work_place if not p.dead else "died",
+            income_display,
+            balance_display,
+            work_display,
             "yes" if p.pension else "no",
             "yes" if p.criminal_record else "no",
             credit_display,
         ])
-    
-    headers = ["ID", "Фамилия", "Имя", "Отчество", "Возраст", "Отец", "Мать", "Образование", "Доход", "Работа", "Пенсия", "Судимость", "Кредит"]
-    print(tabulate(table_data, headers=headers, tablefmt="fancy_grid"))
 
+    headers = ["ID", "Фамилия", "Имя", "Отчество", "Возраст", "Отец", "Мать", "Образование", "Доход", "Баланс", "Работа", "Пенсия", "Судимость", "Кредит"]
+    print(tabulate(table_data, headers=headers, tablefmt="fancy_grid"))

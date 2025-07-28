@@ -23,6 +23,7 @@ class Person:
         self.drive_card_number = drive_card_number
         self.eduсation = eduсation
         self.income = income
+        self.balance = 0
         self.work_place = work_place
         self.cocity_state = cocity_state
         self.criminal_record = criminal_record
@@ -35,12 +36,29 @@ class Person:
         self.prison_release_date = None
         self.pension = False
 
+        self.in_army = False
+        self.army_release_date = None
+
+        self.inheritance_account = 0
+
+
     def get_age(self):
         return relativedelta(state.current_date, self.birthday).years
 
     def tick(self):
         if self.dead:
             return
+        
+        if self.in_army:
+            if state.current_date >= self.army_release_date:
+                self.in_army = False
+                self.army_release_date = None
+                self.work_place = None
+                self.income = 0
+            else:
+                self.work_place = 'Армия'
+                self.income = 10000
+                return
 
         self.check_prison_release()
 
@@ -49,6 +67,15 @@ class Person:
             self.die()
             return
 
+        self.balance += self.income
+        self.balance -= randint(20000, 150000)
+
+        if self.inheritance_account > 0 and self.get_age() >= 18:
+            print(f"{self.first_name} {self.last_name} получил наследство: {self.inheritance_account}")
+            self.balance += self.inheritance_account
+            self.inheritance_account = 0
+
+
         self.try_get_education()
         self.try_change_job()
         self.try_to_marry()
@@ -56,19 +83,37 @@ class Person:
         self.try_go_to_prison()
         self.update_credit_score()
         self.go_to_pension()
+        self.check_prison_status()
 
     def check_death(self, age):
         if age < 50:
-            return random() < 0.001
+            return random() < 0.0007
         elif age < 70:
-            return random() < 0.01
+            return random() < 0.007
         else:
-            return random() < (0.05 + (age - 70) * 0.005)
+            return random() < (0.05 + (age - 70) * 0.003)
 
     def die(self):
         self.dead = True
         self.death_date = state.current_date
         print(f"{self.first_name} {self.last_name} умер в возрасте {self.get_age()}")
+
+        children = [p for p in state.people if (p.father_id == self.id or p.mother_id == self.id) and not p.dead]
+        if not children:
+            return
+        
+        inheritance = self.balance
+        share = inheritance // len(children)
+        
+        for child in children:
+            if child.get_age() < 18:
+                child.inheritance_account += share
+            else:
+                child.balance += share
+
+        self.balance = 0
+
+
 
     def try_get_education(self):
         if self.get_age() == 15:
@@ -82,21 +127,28 @@ class Person:
             elif r < 0.6:
                 self.eduсation = 'University'
 
+            elif r >= 0.4 and self.sex == 'male':
+                self.in_army = True
+                self.army_release_date = state.current_date + relativedelta(years=1)
+                self.work_place = 'Армия'
+                self.income = 10000
+
         elif self.eduсation == 'College' and random() < 0.2:
-            self.eduсation == 'University'
+            self.eduсation = 'University'
+
             
 
     def try_change_job(self):
         if self.pension:
             return
-        if random() <= 0.75:
+        if random() <= 0.9:
             return
         if self.get_age() < 14 or self.criminal_record:
             return
         days_since_last_change = (state.current_date - self.last_job_change_date).days
         if days_since_last_change < 365:
             return
-        if 14 <= self.get_age() < 18 and randint(1,5) != 2:
+        if 14 <= self.get_age() < 16 and randint(1,5) != 2:
             return
 
 
@@ -106,45 +158,76 @@ class Person:
             k = 1
 
         #new offer
-        if random() >= 0.2:
+        if random() >= 0.1:
             if self.work_place == 'IT-компания':
                 delta = randint(20000, 40000)
+                self.income += delta
             elif self.work_place == 'Завод':
                 delta = randint(2000, 10000)
+                self.income += delta
             elif self.work_place == 'Госслужба':
                 delta = randint(15000, 30000)
+                self.income += delta
             elif self.work_place == 'Фриланс':
                 delta = randint(1000, 40000)
+                self.income += delta
+            elif self.work_place == 'Бисзнес':
+                delta = randint(-100000, +200000)
+                self.income += delta
+            elif self.work_place == 'Учитель':
+                delta = randint(2000, 3000)
+                self.income += delta
+        
 
         else:
-        #change job
-            chance = randint(1,4)
+            chance = randint(1,6)
             if chance == 1 and self.eduсation in ['College', 'University']:
-                self.work_place = 'IT-компания'
-                if self.income <= 600000:
-                    delta = randint(12000, 15000)
+                if self.work_place == None:
+                    self.income == 60000
                 else:
                     delta = randint(30000, 50000)
-                self.income += delta * k
-                self.last_job_change_date = state.current_date
+                    self.income += delta * k
+                    self.last_job_change_date = state.current_date
+                self.work_place = 'IT-компания'
             elif chance == 2:
-                self.work_place = 'Завод'
-                delta = randint(2000, 4000)
-                self.income += delta * k
-                self.last_job_change_date = state.current_date
-            if chance == 3 and self.eduсation in ['HIGH SCHOOL', 'College', 'University']:
-                self.work_place = 'Госслужба'
-                if self.income <= 400000:
-                    delta = randint(5000, 15000)
+                if self.work_place == None:
+                    self.income == 40000
                 else:
-                    delta = randint(1000,2000)
-                self.income += delta * k
-                self.last_job_change_date = state.current_date
+                    delta = randint(2000, 4000)
+                    self.income += delta * k
+                    self.last_job_change_date = state.current_date
+                self.work_place = 'Завод'
+            if chance == 3 and self.eduсation in ['HIGH SCHOOL', 'College', 'University']:
+                if self.work_place == None:
+                    self.income = 60000
+                else:
+                    if self.income <= 400000:
+                        delta = randint(5000, 15000)
+                    else:
+                        delta = randint(1000,2000)
+                        self.income += delta * k
+                        self.last_job_change_date = state.current_date
+                self.work_place = 'Госслужба'
             if chance == 4:
+                if self.work_place == None:
+                    self.income = 35000
+                else:
+                    delta = randint(1000, 35000)
+                    self.income += delta * k
+                    self.last_job_change_date = state.current_date
                 self.work_place = 'Фриланс'
-                delta = randint(1000, 30000)
-                self.income += delta * k
-                self.last_job_change_date = state.current_date
+            if chance == 5:
+                if self.work_place == None:
+                    self.income = 10000
+                    self.work_place = 'Бизнес'
+            if chance == 6 and self.eduсation in ['College, University']:
+                if self.work_place == None:
+                    self.income == 30000
+                else:
+                    delta = randint(1000, 35000)
+                    self.income += delta * k
+                    self.last_job_change_date = state.current_date
+                self.work_place = 'Учиетель'
 
         self.income = max(0, self.income)
 
@@ -169,7 +252,7 @@ class Person:
         if existing_children >= 3:
             return
 
-        if random() < 0.015:
+        if random() < 0.01:
             partner = next((p for p in state.people if p.id == self.partner_id), None)
             if not partner:
                 return
@@ -227,7 +310,7 @@ class Person:
 
 
     def try_go_to_prison(self):
-        if not self.criminal_record and random() < 0.005 and self.get_age() > 14:
+        if not self.criminal_record and random() < 0.0005 and self.get_age() > 14:
             self.criminal_record = True
             sentence_years = randint(2, 5)
             self.prison_release_date = state.current_date + relativedelta(years=sentence_years)
@@ -237,15 +320,22 @@ class Person:
             self.criminal_record = False
             self.prison_release_date = None
 
+    def check_prison_status(self):
+        if self.criminal_record and self.prison_release_date:
+            self.work_place = 'тюрьма'
+            self.income = 15000
+            self.criminal_record = True
+
     def update_credit_score(self):
         if self.get_age() <= 14:
             self.credit_score = 0
             return
-        score = 500
+        score = 300
         if self.partner_id: score += 20
         if self.eduсation == 'College': score += 30
         elif self.eduсation == 'University': score += 50
         score += int(self.income / 1000)
+        score += int(self.balance / 1000000)
         if self.criminal_record: score -= 300
         if self.dead: score = 0
         self.credit_score = max(score, 0)
@@ -275,7 +365,7 @@ class Person:
 
         if self.pension:
             self.work_place = 'pension'
-            self.income = 15000 + self.income*0.1
+            self.income = 15000 + self.income*0.3
 
 def random_name(sex):
     return choice(male_names) if sex == 'male' else choice(female_names)

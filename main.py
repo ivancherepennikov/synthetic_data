@@ -100,22 +100,25 @@ for month in range(12 * 30):
 sys.stdout.close()
 
 # --- Построение графиков ---
-plt.figure(figsize=(12, 7))
+fig, axs = plt.subplots(1, 2, figsize=(16, 6), constrained_layout=True)
 
-# Возраст и доход
-plt.subplot(2, 2, 1)
-plt.scatter(age_list, income_by_age, alpha=0.3, color='green')
-plt.xlabel("Age")
-plt.ylabel("Income")
-plt.title("Доход по возрасту")
+# График 1 — Возраст и доход
+axs[0].scatter(age_list, income_by_age, alpha=0.3, color='green')
+axs[0].set_xlabel("Возраст")
+axs[0].set_ylabel("Доход")
+axs[0].set_title("Доход по возрасту")
 
-# Возраст и кредит
-plt.subplot(2, 2, 2)
-plt.scatter(age_list, credit_by_age, alpha=0.3, color='blue')
-plt.xlabel("Age")
-plt.ylabel("Credit Score")
-plt.title("Кредитный рейтинг по возрасту")
+# График 2 — Возраст и кредит
+axs[1].scatter(age_list, credit_by_age, alpha=0.3, color='blue')
+axs[1].set_xlabel("Возраст")
+axs[1].set_ylabel("Кредитный рейтинг")
+axs[1].set_title("Кредитный рейтинг по возрасту")
 
+# Сохраняем и показываем
+plt.savefig("stats.png", dpi=200)
+plt.show()
+
+'''
 # Живые по годам
 plt.subplot(2, 1, 2)
 years = list(range(len(alive_count)))
@@ -124,8 +127,4 @@ plt.xlabel("Годы симуляции")
 plt.ylabel("Количество живых людей")
 plt.title("Статистика количества живых")
 plt.legend()
-
-
-plt.tight_layout()
-plt.savefig("stats.png", dpi=200)
-plt.show()
+'''
