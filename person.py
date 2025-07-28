@@ -23,6 +23,7 @@ class Person:
         self.drive_card_number = drive_card_number
         self.eduсation = eduсation
         self.income = income
+        self.max_income = 0
         self.balance = 0
         self.work_place = work_place
         self.cocity_state = cocity_state
@@ -40,10 +41,17 @@ class Person:
         self.army_release_date = None
 
         self.inheritance_account = 0
+        self.debt = 0
+        self.monthly_interest_rate = state.key_court
 
 
     def get_age(self):
         return relativedelta(state.current_date, self.birthday).years
+    
+    def get_age_at_death(self):
+        if not self.dead:
+            return self.get_age()
+        return relativedelta(self.death_date, self.birthday).years
 
     def tick(self):
         if self.dead:
@@ -68,7 +76,12 @@ class Person:
             return
 
         self.balance += self.income
-        self.balance -= randint(20000, 150000)
+        if self.get_age() > 20:
+            self.balance -= randint(30000, 150000)
+        else:
+            self.inheritance_account = getattr(self, 'inheritance_account', 0)
+            self.inheritance_account -= randint(30000, 150000)
+
 
         if self.inheritance_account > 0 and self.get_age() >= 18:
             print(f"{self.first_name} {self.last_name} получил наследство: {self.inheritance_account}")
@@ -84,6 +97,10 @@ class Person:
         self.update_credit_score()
         self.go_to_pension()
         self.check_prison_status()
+        self.check_and_take_loan()
+        self.apply_loan_interest()
+        self.repay_loan()
+
 
     def check_death(self, age):
         if age < 50:
@@ -105,13 +122,19 @@ class Person:
         inheritance = self.balance
         share = inheritance // len(children)
         
+        debt_share = self.debt // len(children) if self.debt > 0 else 0
+        
         for child in children:
             if child.get_age() < 18:
                 child.inheritance_account += share
+                child.inheritance_account -= debt_share
             else:
                 child.balance += share
+                child.debt += debt_share
+                print(f"{child.first_name} {child.last_name} получил долг {debt_share} от умершего {self.first_name} {self.last_name}")
 
         self.balance = 0
+        self.debt = 0
 
 
 
@@ -183,7 +206,7 @@ class Person:
             chance = randint(1,6)
             if chance == 1 and self.eduсation in ['College', 'University']:
                 if self.work_place == None:
-                    self.income == 60000
+                    self.income = 60000
                 else:
                     delta = randint(30000, 50000)
                     self.income += delta * k
@@ -191,7 +214,7 @@ class Person:
                 self.work_place = 'IT-компания'
             elif chance == 2:
                 if self.work_place == None:
-                    self.income == 40000
+                    self.income = 40000
                 else:
                     delta = randint(2000, 4000)
                     self.income += delta * k
@@ -220,15 +243,16 @@ class Person:
                 if self.work_place == None:
                     self.income = 10000
                     self.work_place = 'Бизнес'
-            if chance == 6 and self.eduсation in ['College, University']:
+            if chance == 6 and self.eduсation in ['College', 'University']:
                 if self.work_place == None:
-                    self.income == 30000
+                    self.income = 30000
                 else:
                     delta = randint(1000, 35000)
                     self.income += delta * k
                     self.last_job_change_date = state.current_date
                 self.work_place = 'Учиетель'
 
+        self.max_income = max(self.income, self.max_income)
         self.income = max(0, self.income)
 
 
@@ -336,6 +360,7 @@ class Person:
         elif self.eduсation == 'University': score += 50
         score += int(self.income / 1000)
         score += int(self.balance / 1000000)
+        score -= int(self.debt / 10000000)
         if self.criminal_record: score -= 300
         if self.dead: score = 0
         self.credit_score = max(score, 0)
@@ -365,7 +390,30 @@ class Person:
 
         if self.pension:
             self.work_place = 'pension'
-            self.income = 15000 + self.income*0.3
+            self.income = 15000 + self.max_income*0.3
+
+
+    #debt
+    def check_and_take_loan(self):
+        if self.balance < 0:
+            loan_amount = -self.balance
+            self.debt += loan_amount
+            self.balance += loan_amount
+            print(f"{self.first_name} {self.last_name} взял кредит на сумму {loan_amount:.2f}")
+
+    def apply_loan_interest(self):
+        if self.debt > 0:
+            interest = self.debt * self.monthly_interest_rate
+            self.debt += interest
+            print(f"{self.first_name} {self.last_name} начислены проценты по кредиту: {interest:.2f}")
+
+    def repay_loan(self):
+        if self.balance > 0 and self.debt > 0:
+            payment = self.balance * 0.75
+            payment = min(payment, self.debt)
+            self.balance -= payment
+            self.debt -= payment
+            print(f"{self.first_name} {self.last_name} выплатил по кредиту: {payment:.2f}")
 
 def random_name(sex):
     return choice(male_names) if sex == 'male' else choice(female_names)

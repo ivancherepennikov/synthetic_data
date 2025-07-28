@@ -81,14 +81,18 @@ def display_people_table():
     table_data = []
     for p in state.people:
         if p.dead:
+            age_display = p.get_age_at_death()
             income_display = f"died ({p.death_date.strftime('%Y-%m-%d')})"
             work_display = '-'
             credit_display = "-"
             balance_display = "-"
+            debt_display = "-"
         else:
+            age_display = p.get_age()
             income_display = f"{int(p.income):,}".replace(',', ' ')
             work_display = p.work_place
             balance_display = f"{int(p.balance):,}".replace(',', ' ')
+            debt_display = f"{int(p.debt):,}".replace(',', ' ') if p.debt > 0 else "0"
             
             if p.credit_score is not None:
                 credit_display = f"{int(p.credit_score):,}".replace(',', ' ')
@@ -100,17 +104,23 @@ def display_people_table():
             p.last_name,
             p.first_name,
             p.patroyomic,
-            p.get_age(),
+            age_display,
             p.father_id,
             p.mother_id,
             p.eduсation,
             income_display,
             balance_display,
+            debt_display,
             work_display,
             "yes" if p.pension else "no",
             "yes" if p.criminal_record else "no",
             credit_display,
         ])
 
-    headers = ["ID", "Фамилия", "Имя", "Отчество", "Возраст", "Отец", "Мать", "Образование", "Доход", "Баланс", "Работа", "Пенсия", "Судимость", "Кредит"]
+    headers = [
+        "ID", "Фамилия", "Имя", "Отчество", "Возраст", 
+        "Отец", "Мать", "Образование", "Доход", 
+        "Баланс", "Долг банку",
+        "Работа", "Пенсия", "Судимость", "Кредит"
+    ]
     print(tabulate(table_data, headers=headers, tablefmt="fancy_grid"))
