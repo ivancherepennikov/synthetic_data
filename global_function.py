@@ -66,11 +66,9 @@ def generate_random_person(id):
         birth_month=birth_date.month,
         birth_day=birth_date.day,
         passport_number=randint(1000, 9999),
-        drive_card_number=None,
         eduсation=education,
         income=income,
         work_place=work_place,
-        cocity_state=randint(1, 10),
         criminal_record=criminal,
         credit_score=300,
         partner_id=None

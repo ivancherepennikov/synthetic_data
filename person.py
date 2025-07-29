@@ -3,10 +3,19 @@ import state
 from dateutil.relativedelta import relativedelta
 from random import random, randint, shuffle, choice, uniform
 from names import male_names, female_names, last_names
+import os
+
+def setup_logging():
+    log_dir = "people_statistic"
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    return log_dir
+
+log_dir = setup_logging()
 
 class Person:
     def __init__(self, id, sex, first_name, last_name, patroyomic, father_id, mother_id, INN, SNILS, 
-                 birth_year, birth_month, birth_day, passport_number, drive_card_number, eduсation, income, work_place, cocity_state, criminal_record, credit_score,
+                 birth_year, birth_month, birth_day, passport_number, eduсation, income, work_place, criminal_record, credit_score,
                  partner_id):
         self.id = id
         self.sex = sex
@@ -20,13 +29,11 @@ class Person:
         self.birthday = datetime.datetime(birth_year, birth_month, birth_day)
 
         self.passport_number = passport_number
-        self.drive_card_number = drive_card_number
         self.eduсation = eduсation
         self.income = income
         self.max_income = 0
         self.balance = 0
         self.work_place = work_place
-        self.cocity_state = cocity_state
         self.criminal_record = criminal_record
         self.credit_score = credit_score
         self.partner_id = partner_id
@@ -77,10 +84,10 @@ class Person:
 
         self.balance += self.income
         if self.get_age() > 20:
-            self.balance -= randint(30000, 150000)
+            self.balance -= randint(30000, 120000)
         else:
             self.inheritance_account = getattr(self, 'inheritance_account', 0)
-            self.inheritance_account -= randint(30000, 150000)
+            self.inheritance_account -= randint(30000, 50000)
 
 
         if self.inheritance_account > 0 and self.get_age() >= 18:
@@ -101,6 +108,22 @@ class Person:
         self.apply_loan_interest()
         self.repay_loan()
         self.add_procent()
+
+        '''log_path = os.path.join("people_statistic", f"person_{self.id}.txt")
+        with open(log_path, "a", encoding="utf-8") as f:
+            log_entry = (
+                f"{state.current_date.date()}: "
+                f"Возраст: {self.get_age()}, "
+                f"Доход: {int(round(self.income))}, "
+                f"Баланс: {int(round(self.balance))}, "
+                f"Долг: {int(round(self.debt))}, "
+                f"Кредитный рейтинг: {self.credit_score}, "
+                f"Работа: {self.work_place}, "
+                f"Образование: {self.eduсation}, "
+                f"{'Мертв' if self.dead else 'Жив'}\n"
+            )
+            f.write(log_entry)'''
+
 
 
     def check_death(self, age):
@@ -216,7 +239,7 @@ class Person:
             elif self.work_place == 'Фриланс':
                 delta = randint(1000, 40000)
                 self.income += delta
-            elif self.work_place == 'Бисзнес':
+            elif self.work_place == 'Бизнес':
                 delta = randint(-100000, +200000)
                 self.income += delta
             elif self.work_place == 'Учитель':
@@ -322,11 +345,9 @@ class Person:
                 birth_month=state.current_date.month,
                 birth_day=state.current_date.day,
                 passport_number=None,
-                drive_card_number=None,
                 eduсation='NONE',
                 income=0,
                 work_place=None,
-                cocity_state=self.cocity_state,
                 criminal_record=False,
                 credit_score=None,
                 partner_id=None
