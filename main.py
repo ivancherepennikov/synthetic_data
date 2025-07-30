@@ -9,6 +9,7 @@ from collections import defaultdict
 import numpy as np
 import shutil
 import os
+import csv
 
 def setup_individual_logs():
     log_dir = "people_statistic"
@@ -16,9 +17,6 @@ def setup_individual_logs():
         shutil.rmtree(log_dir)
     os.makedirs(log_dir)
     return log_dir
-
-import csv
-import os
 
 def log_person_data(person):
     filename = f"people_statistic/person_{person.id}.csv"
@@ -40,7 +38,7 @@ def log_person_data(person):
         person.birthday.date(),
 
         person.passport_number,
-        person.eduсation,
+        person.education,
         int(person.income),
         int(person.max_income),
         int(person.balance),
@@ -64,7 +62,7 @@ def log_person_data(person):
         "ID", "Пол", "Имя", "Фамилия", "Отчество",
         "Отец_ID", "Мать_ID", "ИНН", "СНИЛС", "ДатаРождения",
         "Паспорт", "Образование", "Доход", "МаксДоход", "Баланс", 
-        "Работа", "Город/Регион", "Судимость", "КредитОчки",
+        "Работа", "Судимость", "КредитОчки",
         "Партнёр_ID", "Умер", "ДатаСмерти", "ДатаСменыРаботы",
         "ОсвобождёнИзТюрьмы", "Пенсионер", "ВАрмии", "ДатаОсвобожденияИзАрмии",
         "Наследство", "Долг"
@@ -94,7 +92,7 @@ p1 = Person(
     birth_month=2,
     birth_day=12,
     passport_number=52,
-    eduсation='HIGH SCHOOL',
+    education='HIGH SCHOOL',
     income=50000,
     work_place='Бизнес',
     criminal_record=False,
@@ -116,7 +114,7 @@ p2 = Person(
     birth_month=6,
     birth_day=23,
     passport_number=32,
-    eduсation='College',
+    education='College',
     income=35000,
     work_place='Завод',
     criminal_record=True,

@@ -4,6 +4,14 @@ from dateutil.relativedelta import relativedelta
 from random import random, randint, shuffle, choice, uniform
 from names import male_names, female_names, last_names
 import os
+import math
+
+def age_coefficient(age):
+    A = 0.8
+    B = 0.4
+    C = 45
+    D = 5
+    return A + B / (1 + math.exp((age - C) / D))
 
 def setup_logging():
     log_dir = "people_statistic"
@@ -15,7 +23,7 @@ log_dir = setup_logging()
 
 class Person:
     def __init__(self, id, sex, first_name, last_name, patroyomic, father_id, mother_id, INN, SNILS, 
-                 birth_year, birth_month, birth_day, passport_number, eduсation, income, work_place, criminal_record, credit_score,
+                 birth_year, birth_month, birth_day, passport_number, education, income, work_place, criminal_record, credit_score,
                  partner_id):
         self.id = id
         self.sex = sex
@@ -29,15 +37,15 @@ class Person:
         self.birthday = datetime.datetime(birth_year, birth_month, birth_day)
 
         self.passport_number = passport_number
-        self.eduсation = eduсation
+        self.education = education
         self.income = income
         self.max_income = 0
         self.balance = 0
         self.work_place = work_place
         self.criminal_record = criminal_record
         self.credit_score = credit_score
-        self.partner_id = partner_id
 
+        self.partner_id = partner_id
         self.dead = False
         self.death_date = None
         self.last_job_change_date = state.current_date
@@ -50,6 +58,7 @@ class Person:
         self.inheritance_account = 0
         self.debt = 0
         self.monthly_interest_rate = state.key_court
+
 
 
     def get_age(self):
@@ -185,15 +194,15 @@ class Person:
 
     def try_get_education(self):
         if self.get_age() == 15:
-            self.eduсation = 'School'
+            self.education = 'School'
         if self.get_age() == 17 and random() > 0.6:
-            self.eduсation = 'HIGH SCHOOL'
-        elif self.eduсation == 'HIGH SCHOOL' and self.get_age() >= 18:
+            self.education = 'HIGH SCHOOL'
+        elif self.education == 'HIGH SCHOOL' and self.get_age() >= 18:
             r = random()
             if r < 0.4:
-                self.eduсation = 'College'
+                self.education = 'College'
             elif r < 0.6:
-                self.eduсation = 'University'
+                self.education = 'University'
 
             elif r >= 0.4 and self.sex == 'male':
                 self.in_army = True
@@ -201,8 +210,8 @@ class Person:
                 self.work_place = 'Армия'
                 self.income = 10000
 
-        elif self.eduсation == 'College' and random() < 0.2:
-            self.eduсation = 'University'
+        elif self.education == 'College' and random() < 0.2:
+            self.education = 'University'
 
             
 
@@ -249,7 +258,7 @@ class Person:
 
         else:
             chance = randint(1,6)
-            if chance == 1 and self.eduсation in ['College', 'University']:
+            if chance == 1 and self.education in ['College', 'University']:
                 if self.work_place == None:
                     self.income = 60000
                 else:
@@ -265,7 +274,7 @@ class Person:
                     self.income += delta * k
                     self.last_job_change_date = state.current_date
                 self.work_place = 'Завод'
-            if chance == 3 and self.eduсation in ['HIGH SCHOOL', 'College', 'University']:
+            if chance == 3 and self.education in ['HIGH SCHOOL', 'College', 'University']:
                 if self.work_place == None:
                     self.income = 60000
                 else:
@@ -288,7 +297,7 @@ class Person:
                 if self.work_place == None:
                     self.income = 10000
                     self.work_place = 'Бизнес'
-            if chance == 6 and self.eduсation in ['College', 'University']:
+            if chance == 6 and self.education in ['College', 'University']:
                 if self.work_place == None:
                     self.income = 30000
                 else:
@@ -345,7 +354,7 @@ class Person:
                 birth_month=state.current_date.month,
                 birth_day=state.current_date.day,
                 passport_number=None,
-                eduсation='NONE',
+                education='NONE',
                 income=0,
                 work_place=None,
                 criminal_record=False,
@@ -394,15 +403,15 @@ class Person:
             self.criminal_record = True
 
     def update_credit_score(self):
-        if self.get_age() <= 14 or self.dead:
+        if self.get_age() <= 18 or self.dead:
             self.credit_score = 0
             return
 
         score = 300
 
-        if self.eduсation == 'College':
+        if self.education == 'College':
             score += 30
-        elif self.eduсation == 'University':
+        elif self.education == 'University':
             score += 50
 
         if self.partner_id:
@@ -414,6 +423,8 @@ class Person:
 
         if self.criminal_record:
             score -= 200
+
+        score *= (0.9 + 0.1 * age_coefficient(self.get_age()))
 
         score = min(max(score, 0), 999)
         self.credit_score = score
