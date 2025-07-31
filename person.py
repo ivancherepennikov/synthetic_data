@@ -92,17 +92,21 @@ class Person:
             return
 
         self.balance += self.income
-        if self.get_age() > 20:
-            self.balance -= randint(30000, 120000)
+        if self.in_army:
+            pass
+        
         else:
-            self.inheritance_account = getattr(self, 'inheritance_account', 0)
-            self.inheritance_account -= randint(30000, 50000)
+            if self.get_age() > 20:
+                self.balance -= randint(30000, 120000)
+            else:
+                self.inheritance_account = getattr(self, 'inheritance_account', 0)
+                self.inheritance_account -= randint(30000, 50000)
 
 
-        if self.inheritance_account > 0 and self.get_age() >= 18:
-            print(f"{self.first_name} {self.last_name} получил наследство: {self.inheritance_account}")
-            self.balance += self.inheritance_account
-            self.inheritance_account = 0
+            if self.inheritance_account > 0 and self.get_age() >= 18:
+                print(f"{self.first_name} {self.last_name} получил наследство: {self.inheritance_account}")
+                self.balance += self.inheritance_account
+                self.inheritance_account = 0
 
 
         self.try_get_education()

@@ -12,14 +12,14 @@ import os
 import csv
 
 def setup_individual_logs():
-    log_dir = "people_statistic"
+    log_dir = "people_statistic" #_2
     if os.path.exists(log_dir):
         shutil.rmtree(log_dir)
     os.makedirs(log_dir)
     return log_dir
 
 def log_person_data(person):
-    filename = f"people_statistic/person_{person.id}.csv"
+    filename = f"people_statistic/person_{person.id}.csv" #_2
     write_headers = not os.path.exists(filename)
 
     if person.dead and os.path.exists(filename):
@@ -44,7 +44,7 @@ def log_person_data(person):
         int(person.balance),
         person.work_place,
         person.criminal_record,
-        int(person.credit_score) if person.credit_score else "",
+        int(person.credit_score) if person.credit_score is not None else 0,
 
         person.partner_id,
         person.dead,
