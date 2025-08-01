@@ -78,7 +78,7 @@ def log_person_data(person):
 sys.stdout = open("output.txt", "w", encoding="utf-8")
 setup_individual_logs()
 
-for i in range(1, 301):
+for i in range(1, 101):
     person = generate_random_person(i)
     state.people.append(person)
 
@@ -91,7 +91,7 @@ dead_count = []
 net_worth_stats = []
 net_worth_by_age = [] 
 
-for month in range(12 * 100):
+for month in range(12 * 30):
     print(state.current_date)
     
     for person in list(state.people):  

@@ -54,6 +54,8 @@ class Person:
         self.last_payment_date = None
         self.monthly_payment = 0
         self.missed_payments = 0
+        self.gave_bribe = False
+
 
         self.work_place = work_place
         self.criminal_record = criminal_record
@@ -72,6 +74,7 @@ class Person:
         self.inheritance_account = 0
         self.debt = 0
         self.monthly_interest_rate = state.key_court
+        self.cleared_credit = False
 
 
 
@@ -137,6 +140,10 @@ class Person:
         self.apply_loan_interest()
         self.repay_loan()
         self.add_procent()
+        self.try_bribe()
+        self.fire()
+        self.try_clear_credit_history()
+
 
         '''log_path = os.path.join("people_statistic", f"person_{self.id}.txt")
         with open(log_path, "a", encoding="utf-8") as f:
@@ -253,6 +260,14 @@ class Person:
             k = - 1
         else:
             k = 1
+
+        #cпекуляция
+        if self.work_place in ['Госслужба', 'Бизнес'] and random() < 0.01:
+            self.income += randint(50000, 200000)
+            if random() < 0.2:
+                self.criminal_record = True
+                self.prison_release_date = state.current_date + relativedelta(years=3)
+
 
         #new offer
         if random() >= 0.1:
@@ -449,24 +464,22 @@ class Person:
             self.credit_score = 0
             return
 
-        # Нормализуем ключевые факторы в диапазон -1..1
-        income_factor = np.tanh(np.log1p(self.income) / 14 - 1.5)      # ~[-1, 1]
+        income_factor = np.tanh(np.log1p(self.income) / 14 - 1.5)    
         safe_balance = max(self.balance, -0.99)
         safe_debt = max(self.debt, 0)
 
         balance_factor = np.tanh(np.log1p(safe_balance) / 15 - 1.5)
         debt_factor = -np.tanh(np.log1p(safe_debt + 1) / 12)
                 # отрицательный вклад
-        age_factor = np.cos(self.get_age() / 80 * np.pi)               # волна по возрасту
-        missed_factor = -min(self.missed_payments * 0.1, 1.0)         # до -1
-        loan_factor = -min(self.loans_taken * 0.05, 0.5)               # до -0.5
+        age_factor = np.cos(self.get_age() / 80 * np.pi)     
+        missed_factor = -min(self.missed_payments * 0.1, 1.0)    
+        loan_factor = -min(self.loans_taken * 0.05, 0.5)             
         education_factor = {
             "None": -0.4,
             "College": 0.1,
             "University": 0.3
         }.get(self.education, 0)
 
-        # Итоговое "сырой" рейтинг
         raw_score = (
             income_factor * 0.2 +
             balance_factor * 0.2 +
@@ -479,16 +492,50 @@ class Person:
 
         risk = min(1.0, (self.debt + 1) / 1e6 + self.missed_payments * 0.05)
         raw_score += np.random.normal(0, 0.15 + 0.3 * risk)
-        if np.random.rand() < 0.01:  # 1% шанс
-            raw_score -= np.random.uniform(0.5, 1.0)  # сильный провал
+        if np.random.rand() < 0.01:
+            raw_score -= np.random.uniform(0.5, 1.0)  
         elif np.random.rand() < 0.01:
-            raw_score += np.random.uniform(0.5, 1.0)  # сильный всплеск
+            raw_score += np.random.uniform(0.5, 1.0)
 
  
         raw_score += np.random.normal(0, 0.1)
 
         final_score = np.clip((raw_score + 1) / 2, 0, 1)
         self.credit_score = int(final_score * 999)
+
+
+    def try_bribe(self):
+        if self.dead or self.criminal_record or self.get_age() < 18 or self.pension:
+            return
+
+        if random() < 0.02:
+            print(f"{self.first_name} {self.last_name} попытался дать взятку.")
+            self.gave_bribe = True 
+
+            if random() < 0.7:
+                self.income += 100000
+                print(f"{self.first_name} {self.last_name} успешно дал взятку. Доход увеличен до {self.income}.")
+            else:
+                self.criminal_record = True
+                self.prison_release_date = state.current_date + relativedelta(years=5)
+                self.work_place = 'тюрьма'
+                self.income = 15000
+                print(f"{self.first_name} {self.last_name} попался на взятке и получил 5 лет тюрьмы.")
+
+    def try_clear_credit_history(self):
+        if self.dead or self.debt <= 0 or self.criminal_record or self.cleared_credit:
+            return
+
+        if random() < 0.003:
+            print(f"{self.first_name} {self.last_name} замял кредитную историю и обнулил долг!")
+
+            self.debt = 0
+            self.missed_payments = 0
+            self.monthly_payment = 0
+            self.last_payment_date = None
+            self.credit_score = max(self.credit_score, 600)
+            self.cleared_credit = True
+
 
 
 
@@ -522,7 +569,7 @@ class Person:
 
     #debt
     def check_and_take_loan(self):
-        if self.balance < 0:
+        if self.balance < 0 and not self.gave_bribe:
             loan_amount = -self.balance
             self.debt += loan_amount
             self.balance += loan_amount
@@ -533,6 +580,9 @@ class Person:
             self.missed_payments = 0
 
             print(f"{self.first_name} {self.last_name} взял кредит на сумму {loan_amount:.2f}, платёж {self.monthly_payment:.2f}")
+        elif self.balance < 0 and self.gave_bribe:
+            print(f"{self.first_name} {self.last_name} не может взять кредит из-за истории с взяткой.")
+
 
     def check_payment_due(self):
         if self.debt <= 0 or not self.last_payment_date:
@@ -581,6 +631,15 @@ class Person:
 
     def index_salary(self):
         self.income *= (1 + state.salary_up)
+
+    def fire(self):
+        if self.income < 200000 and self.debt > 100000 and self.get_age() > 30:
+            if random() < 0.01:
+                self.income = 0
+                self.work_place = None
+                print(f"{self.first_name} {self.last_name} выгорел и потерял работу.")
+
+
 
 def random_name(sex):
     return choice(male_names) if sex == 'male' else choice(female_names)
