@@ -4,14 +4,23 @@ from dateutil.relativedelta import relativedelta
 from random import random, randint, shuffle, choice, uniform
 from names import male_names, female_names, last_names
 import os
-import math
+import numpy as np
+
+base = np.random.normal(loc=500, scale=150)
+score = int(min(max(base, 200), 800))
 
 def age_coefficient(age):
-    A = 0.8
-    B = 0.4
-    C = 45
-    D = 5
-    return A + B / (1 + math.exp((age - C) / D))
+    if age < 20:
+        return 0.7
+    elif age < 30:
+        return 1.0
+    elif age < 50:
+        return 1.1
+    elif age < 65:
+        return 1.0
+    else:
+        return 0.9
+
 
 def setup_logging():
     log_dir = "people_statistic"
@@ -41,6 +50,11 @@ class Person:
         self.income = income
         self.max_income = 0
         self.balance = 0
+        self.loans_taken = 0
+        self.last_payment_date = None
+        self.monthly_payment = 0
+        self.missed_payments = 0
+
         self.work_place = work_place
         self.criminal_record = criminal_record
         self.credit_score = credit_score
@@ -96,7 +110,7 @@ class Person:
             pass
         
         else:
-            if self.get_age() > 20:
+            if self.get_age() > 20 and not self.in_army:
                 self.balance -= randint(30000, 120000)
             else:
                 self.inheritance_account = getattr(self, 'inheritance_account', 0)
@@ -112,12 +126,14 @@ class Person:
         self.try_get_education()
         self.try_change_job()
         self.try_to_marry()
+        self.try_to_divorce()
         self.try_have_children()
         self.try_go_to_prison()
         self.update_credit_score()
         self.go_to_pension()
         self.check_prison_status()
         self.check_and_take_loan()
+        self.check_payment_due()
         self.apply_loan_interest()
         self.repay_loan()
         self.add_procent()
@@ -148,7 +164,7 @@ class Person:
             base_death_chance = 0.05 + (age - 70) * 0.003
 
         wealth_modifier = 1.0
-        
+       
         if self.income > 100000:
             wealth_modifier -= 0.1
         elif self.income < 20000:
@@ -326,6 +342,28 @@ class Person:
                 print(state.current_date)
                 break
 
+    def try_to_divorce(self):
+        if self.partner_id is None or self.dead:
+            return
+
+        partner = next((p for p in state.people if p.id == self.partner_id), None)
+        if not partner or partner.dead:
+            return
+
+        divorce_chance = 0.01
+
+        if self.criminal_record or partner.criminal_record:
+            divorce_chance += 0.005
+
+        if abs(self.income - partner.income) > 100000:
+            divorce_chance += 0.002
+
+        if random() < divorce_chance:
+            print(f"{self.first_name} {self.last_name} развёлся с {partner.first_name} {partner.last_name}")
+            self.partner_id = None
+            partner.partner_id = None
+
+
     def try_have_children(self):
         if self.partner_id is None or self.get_age() < 16 or self.get_age() > 50 or self.criminal_record:
             return
@@ -407,31 +445,52 @@ class Person:
             self.criminal_record = True
 
     def update_credit_score(self):
-        if self.get_age() <= 18 or self.dead:
+        if self.dead or self.get_age() < 18:
             self.credit_score = 0
             return
 
-        score = 300
+        # Нормализуем ключевые факторы в диапазон -1..1
+        income_factor = np.tanh(np.log1p(self.income) / 14 - 1.5)      # ~[-1, 1]
+        safe_balance = max(self.balance, -0.99)
+        safe_debt = max(self.debt, 0)
 
-        if self.education == 'College':
-            score += 30
-        elif self.education == 'University':
-            score += 50
+        balance_factor = np.tanh(np.log1p(safe_balance) / 15 - 1.5)
+        debt_factor = -np.tanh(np.log1p(safe_debt + 1) / 12)
+                # отрицательный вклад
+        age_factor = np.cos(self.get_age() / 80 * np.pi)               # волна по возрасту
+        missed_factor = -min(self.missed_payments * 0.1, 1.0)         # до -1
+        loan_factor = -min(self.loans_taken * 0.05, 0.5)               # до -0.5
+        education_factor = {
+            "None": -0.4,
+            "College": 0.1,
+            "University": 0.3
+        }.get(self.education, 0)
 
-        if self.partner_id:
-            score += 20
+        # Итоговое "сырой" рейтинг
+        raw_score = (
+            income_factor * 0.2 +
+            balance_factor * 0.2 +
+            debt_factor * 0.2 +
+            age_factor * 0.05 +
+            missed_factor * 0.15 +
+            loan_factor * 0.1 +
+            education_factor * 0.05
+        )
 
-        score += int(self.income / 2000) 
-        score += int(self.balance / 500000)
-        score -= int(self.debt / 100000)
+        risk = min(1.0, (self.debt + 1) / 1e6 + self.missed_payments * 0.05)
+        raw_score += np.random.normal(0, 0.15 + 0.3 * risk)
+        if np.random.rand() < 0.01:  # 1% шанс
+            raw_score -= np.random.uniform(0.5, 1.0)  # сильный провал
+        elif np.random.rand() < 0.01:
+            raw_score += np.random.uniform(0.5, 1.0)  # сильный всплеск
 
-        if self.criminal_record:
-            score -= 200
+ 
+        raw_score += np.random.normal(0, 0.1)
 
-        score *= (0.9 + 0.1 * age_coefficient(self.get_age()))
+        final_score = np.clip((raw_score + 1) / 2, 0, 1)
+        self.credit_score = int(final_score * 999)
 
-        score = min(max(score, 0), 999)
-        self.credit_score = score
+
 
 
     def go_to_pension(self):
@@ -467,7 +526,40 @@ class Person:
             loan_amount = -self.balance
             self.debt += loan_amount
             self.balance += loan_amount
-            print(f"{self.first_name} {self.last_name} взял кредит на сумму {loan_amount:.2f}")
+            self.loans_taken += 1
+
+            self.monthly_payment = loan_amount / 12
+            self.last_payment_date = state.current_date
+            self.missed_payments = 0
+
+            print(f"{self.first_name} {self.last_name} взял кредит на сумму {loan_amount:.2f}, платёж {self.monthly_payment:.2f}")
+
+    def check_payment_due(self):
+        if self.debt <= 0 or not self.last_payment_date:
+            return
+
+        months_due = (state.current_date.year - self.last_payment_date.year) * 12 + (state.current_date.month - self.last_payment_date.month)
+
+        if months_due >= 1:
+            for _ in range(months_due):
+                if self.balance >= self.monthly_payment:
+                    self.balance -= self.monthly_payment
+                    self.debt -= self.monthly_payment
+                    self.last_payment_date += relativedelta(months=1)
+                    print(f"{self.first_name} {self.last_name} оплатил ежемесячный платёж: {self.monthly_payment:.2f}")
+                else:
+                    self.missed_payments += 1
+                    self.last_payment_date += relativedelta(months=1)
+                    penalty = self.monthly_payment * 0.05 * self.missed_payments
+                    self.debt += penalty
+                    print(f"{self.first_name} {self.last_name} пропустил платёж! Штраф: {penalty:.2f}. Пропущено: {self.missed_payments}")
+
+                    # Последствия просрочек
+                    if self.missed_payments >= 3:
+                        self.credit_score = max(0, self.credit_score - 50)
+                    if self.missed_payments >= 6 and random() < 0.2:
+                        self.try_go_to_prison()
+
 
     def apply_loan_interest(self):
         if self.debt > 0:

@@ -78,54 +78,7 @@ def log_person_data(person):
 sys.stdout = open("output.txt", "w", encoding="utf-8")
 setup_individual_logs()
 
-p1 = Person(
-    id=1,
-    sex='male',
-    first_name='Ivan',
-    last_name='Cherepennikov',
-    patroyomic='Valerevic',
-    father_id=None,
-    mother_id=None,
-    INN=98398,
-    SNILS=83978130,
-    birth_year=2006,
-    birth_month=2,
-    birth_day=12,
-    passport_number=52,
-    education='HIGH SCHOOL',
-    income=50000,
-    work_place='Бизнес',
-    criminal_record=False,
-    credit_score=500,
-    partner_id=2
-)
-
-p2 = Person(
-    id=2,
-    sex='female',
-    first_name='Anna',
-    last_name='Ivanova',
-    patroyomic='Petrovna',
-    father_id=None,
-    mother_id=None,
-    INN=92221,
-    SNILS=844478130,
-    birth_year=2004,
-    birth_month=6,
-    birth_day=23,
-    passport_number=32,
-    education='College',
-    income=35000,
-    work_place='Завод',
-    criminal_record=True,
-    credit_score=500,
-    partner_id=1
-)
-
-state.people.append(p1)
-state.people.append(p2)
-
-for i in range(3, 101):
+for i in range(1, 301):
     person = generate_random_person(i)
     state.people.append(person)
 
@@ -138,7 +91,7 @@ dead_count = []
 net_worth_stats = []
 net_worth_by_age = [] 
 
-for month in range(12 * 30):
+for month in range(12 * 100):
     print(state.current_date)
     
     for person in list(state.people):  
