@@ -15,7 +15,7 @@ all_data = load_all_people_data("people_statistic")
 dataset = CreditSimulationDataset(all_data)
 print(f"Загружено записей: {len(dataset)}")
 
-train_size = int(0.8 * len(dataset))
+train_size = int(0.9 * len(dataset))
 test_size = len(dataset) - train_size
 train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
 
