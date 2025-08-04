@@ -12,60 +12,64 @@ import os
 import csv
 
 def setup_individual_logs():
-    log_dir = "people_statistic" #_2
+    log_dir = "people_statistic"
     if os.path.exists(log_dir):
         shutil.rmtree(log_dir)
     os.makedirs(log_dir)
     return log_dir
 
 def log_person_data(person):
-    filename = f"people_statistic/person_{person.id}.csv" #_2
+    filename = f"people_statistic/person_{person.id}.csv"
     write_headers = not os.path.exists(filename)
 
     if person.dead and os.path.exists(filename):
         return
 
+    age = person.get_age()
+    days_on_job = (state.current_date - person.last_job_change_date).days if person.last_job_change_date else 0
+    marital_status = 1 if person.partner_id is not None else 0
+    
     row = [
         person.id,
         person.sex,
-        person.first_name,
-        person.last_name,
-        person.patroyomic,
-        person.father_id,
-        person.mother_id,
-        person.INN,
-        person.SNILS,
-        person.birthday.date(),
-
-        person.passport_number,
+        age,
         person.education,
+        
         int(person.income),
         int(person.max_income),
         int(person.balance),
-        person.work_place,
-        person.criminal_record,
-        int(person.credit_score) if person.credit_score is not None else 0,
-
-        person.partner_id,
-        person.dead,
-        person.death_date.date() if person.death_date else "",
-        person.last_job_change_date.date(),
-        person.prison_release_date.date() if person.prison_release_date else "",
-        person.pension,
-        person.in_army,
-        person.army_release_date.date() if person.army_release_date else "",
-        int(person.inheritance_account),
         int(person.debt),
+        int(person.inheritance_account),
+        int(person.monthly_payment),
+        person.loans_taken,
+        person.monthly_interest_rate,
+        
+        person.missed_payments,
+        int(person.cleared_credit),
+        
+        person.work_place,
+        days_on_job,
+        int(person.pension),
+        int(person.in_army),
+        
+        int(person.criminal_record),
+        int(person.gave_bribe),
+        
+        marital_status,
+        
+        int(person.credit_score) if person.credit_score is not None else 0
     ]
 
     headers = [
-        "ID", "Пол", "Имя", "Фамилия", "Отчество",
-        "Отец_ID", "Мать_ID", "ИНН", "СНИЛС", "ДатаРождения",
-        "Паспорт", "Образование", "Доход", "МаксДоход", "Баланс", 
-        "Работа", "Судимость", "КредитОчки",
-        "Партнёр_ID", "Умер", "ДатаСмерти", "ДатаСменыРаботы",
-        "ОсвобождёнИзТюрьмы", "Пенсионер", "ВАрмии", "ДатаОсвобожденияИзАрмии",
-        "Наследство", "Долг"
+        "ID", "Пол", "Возраст", "Образование",
+        "income", "max_income", "balance", "debt",
+        "inheritance_account", "monthly_payment", "loans_taken",
+        "monthly_interest_rate",
+        "missed_payments", "cleared_credit",
+        "Работа", "ДнейНаРаботе", "Пенсионер", "ВАрмии",
+        "Судимость", "gave_bribe",
+        "СемейноеПоложение",
+        "КредитОчки"
     ]
 
     with open(filename, "a", encoding="utf-8", newline="") as f:
@@ -78,7 +82,7 @@ def log_person_data(person):
 sys.stdout = open("output.txt", "w", encoding="utf-8")
 setup_individual_logs()
 
-for i in range(1, 101):
+for i in range(1, 1001):
     person = generate_random_person(i)
     state.people.append(person)
 
@@ -91,7 +95,7 @@ dead_count = []
 net_worth_stats = []
 net_worth_by_age = [] 
 
-for month in range(12 * 30):
+for month in range(12 * 100):
     print(state.current_date)
     
     for person in list(state.people):  

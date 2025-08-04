@@ -470,7 +470,6 @@ class Person:
 
         balance_factor = np.tanh(np.log1p(safe_balance) / 15 - 1.5)
         debt_factor = -np.tanh(np.log1p(safe_debt + 1) / 12)
-                # отрицательный вклад
         age_factor = np.cos(self.get_age() / 80 * np.pi)     
         missed_factor = -min(self.missed_payments * 0.1, 1.0)    
         loan_factor = -min(self.loans_taken * 0.05, 0.5)             
@@ -532,9 +531,9 @@ class Person:
             self.debt = 0
             self.missed_payments = 0
             self.monthly_payment = 0
-            self.last_payment_date = None
             self.credit_score = max(self.credit_score, 600)
             self.cleared_credit = True
+
 
 
 
