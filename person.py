@@ -20,6 +20,35 @@ def age_coefficient(age):
         return 1.0
     else:
         return 0.9
+    
+
+import state
+
+def get_birth_boost_factor():
+    current_alive = len([p for p in state.people if not p.dead])
+    x_n = current_alive / state.max_population
+    x_next = state.logistic_r * x_n * (1 - x_n)
+    target_population = x_next * state.max_population
+
+    shortfall = target_population - current_alive
+    if shortfall <= 0:
+        return 1.0
+    boost = min(3.0, 1.0 + shortfall / 100) 
+    return boost
+
+
+def get_death_boost_factor():
+    current_alive = len([p for p in state.people if not p.dead])
+    x_n = current_alive / state.max_population
+
+    if x_n < 0.5:
+        return 0.9
+    elif x_n > 1.0:
+        return min(2.0, 1.0 + (x_n - 1.0) * 4)
+    else:
+        return 1.0
+
+
 
 
 def setup_logging():
@@ -115,7 +144,7 @@ class Person:
         else:
             if self.get_age() > 20 and not self.in_army:
                 self.balance -= randint(30000, 120000)
-            else:
+            elif self.get_age() > 20:
                 self.inheritance_account = getattr(self, 'inheritance_account', 0)
                 self.inheritance_account -= randint(30000, 50000)
 
@@ -188,7 +217,8 @@ class Person:
         wealth_modifier = max(0.7, min(1.3, wealth_modifier))
 
         death_chance = base_death_chance * wealth_modifier
-        return random() < death_chance
+        death_boost = get_death_boost_factor()
+        return random() < death_chance * death_boost
 
 
     def die(self):
@@ -386,8 +416,9 @@ class Person:
         existing_children = self.count_children_with_partner()
         if existing_children >= 3:
             return
-
-        if random() < 0.005:
+        
+        birth_boost = get_birth_boost_factor()
+        if random() < 0.005 * birth_boost:
             partner = next((p for p in state.people if p.id == self.partner_id), None)
             if not partner:
                 return
