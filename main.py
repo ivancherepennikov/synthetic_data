@@ -94,7 +94,7 @@ dead_count = []
 net_worth_stats = []
 net_worth_by_age = [] 
 
-for month in range(12 * 500):
+for month in range(12 * 300):
     print(state.current_date)
     
     for person in list(state.people):  
@@ -173,8 +173,8 @@ plt.scatter(ages_net, net_worths, alpha=0.1, color='purple', label="По воз�
 avg_age, avg_net = calculate_averages(ages_net, net_worths)
 plt.plot(avg_age, avg_net, color='indigo', linewidth=2, label="Средняя дельта")
 plt.xlabel("Возраст")
-plt.ylabel("Чистая стоимость (баланс - долг)")
-plt.title("Чистая стоимость по возрасту")
+plt.ylabel("Капитал (баланс - долг)")
+plt.title("Капитал")
 plt.legend()
 
 plt.tight_layout()

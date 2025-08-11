@@ -105,6 +105,8 @@ class Person:
         self.monthly_interest_rate = state.key_court
         self.cleared_credit = False
 
+        self.temperament = None
+
 
 
     def get_age(self):
@@ -372,7 +374,6 @@ class Person:
                 self.work_place = 'Учиетель'
 
         self.max_income = max(self.income, self.max_income)
-        self.income = max(0, self.income)
 
 
     def try_to_marry(self):
@@ -494,8 +495,9 @@ class Person:
         if self.dead or self.get_age() < 18:
             self.credit_score = 0
             return
-
-        income_factor = np.tanh(np.log1p(self.income) / 14 - 1.5)    
+        
+        safe_income = max(self.income, -0.99)
+        income_factor = np.tanh(np.log1p(safe_income) / 14 - 1.5)  
         safe_balance = max(self.balance, -0.99)
         safe_debt = max(self.debt, 0)
 
@@ -634,7 +636,6 @@ class Person:
                     self.debt += penalty
                     print(f"{self.first_name} {self.last_name} пропустил платёж! Штраф: {penalty:.2f}. Пропущено: {self.missed_payments}")
 
-                    # Последствия просрочек
                     if self.missed_payments >= 3:
                         self.credit_score = max(0, self.credit_score - 50)
                     if self.missed_payments >= 6 and random() < 0.2:
@@ -668,6 +669,27 @@ class Person:
                 self.income = 0
                 self.work_place = None
                 print(f"{self.first_name} {self.last_name} выгорел и потерял работу.")
+
+
+    
+    def update_income(self):
+
+        salary = max(self.salary, 0)
+        investments = max(self.investments_income, 0)
+        rent_income = max(self.rent_income, 0)
+
+        debt_interest = max(self.debt, 0) * 0.02
+        penalties = max(self.penalties, 0)
+        taxes = max(salary * 0.13, 0)
+
+        total_income = (salary + investments + rent_income) - (debt_interest + penalties + taxes)
+        self.income += total_income
+
+        if not np.isfinite(self.income):
+            self.income = 0
+
+        self.income = np.clip(self.income, -1e6, 1e6)
+
 
 
 
