@@ -55,6 +55,7 @@ def log_person_data(person):
         int(person.gave_bribe),
         
         marital_status,
+        person.temperament,
         
         int(person.credit_score) if person.credit_score is not None else 0
     ]
@@ -67,7 +68,7 @@ def log_person_data(person):
         "missed_payments", "cleared_credit",
         "Работа", "ДнейНаРаботе", "Пенсионер", "ВАрмии",
         "Судимость", "gave_bribe",
-        "СемейноеПоложение",
+        "СемейноеПоложение", "ТипЛичности",
         "КредитОчки"
     ]
 

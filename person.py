@@ -22,8 +22,6 @@ def age_coefficient(age):
         return 0.9
     
 
-import state
-
 def get_birth_boost_factor():
     current_alive = len([p for p in state.people if not p.dead])
     x_n = current_alive / state.max_population
@@ -116,6 +114,35 @@ class Person:
         if not self.dead:
             return self.get_age()
         return relativedelta(self.death_date, self.birthday).years
+    
+    def spend_money_by_type(self):
+        t = self.temperament.lower()
+        age = self.get_age()
+        
+        if age < 20:
+            return 0
+        
+        if t == 'гипертим':
+            return randint(40000, 150000)
+        elif t == 'дистим':
+            return randint(30000, 50000)
+        elif t == 'эмотив':
+            return randint(25000, 90000)
+        elif t == 'эпилептоид':
+            return randint(25000, 70000)
+        elif t == 'тревожно-мнительный':
+            return randint(30000, 50000)
+        elif t == 'циклоид':
+            if randint(1, 100) <= 30:
+                return randint(70000, 150000)
+            else:
+                return randint(30000, 50000)
+        elif t == 'истероид':
+            return randint(30000, 120000)
+        elif t == 'возбудимый':
+            return randint(35000, 200000)
+        else:
+            return randint(30000, 100000)
 
     def tick(self):
         if self.dead:
@@ -145,10 +172,12 @@ class Person:
         
         else:
             if self.get_age() > 20 and not self.in_army:
-                self.balance -= randint(30000, 120000)
+                expenses = self.spend_money_by_type()
+                self.balance -= expenses
             elif self.get_age() > 20:
                 self.inheritance_account = getattr(self, 'inheritance_account', 0)
-                self.inheritance_account -= randint(30000, 50000)
+                expenses = self.spend_money_by_type()
+                self.inheritance_account -= expenses
 
 
             if self.inheritance_account > 0 and self.get_age() >= 18:
@@ -252,32 +281,49 @@ class Person:
 
 
     def try_get_education(self):
+        personality_factor = {
+            'гипертим': 1.2,
+            'дистим': 0.7,
+            'эмотив': 1.1,
+            'эпилептоид': 0.9,
+            'тревожно-мнительный': 0.8,
+            'циклоид': 1.0,
+            'истероид': 1.0,
+            'вохбудимый': 1.1,
+            None: 1.0
+        }
+
+        factor = personality_factor.get(self.temperament, 1.0)
+
         if self.get_age() == 15:
             self.education = 'School'
-        if self.get_age() == 17 and random() > 0.6:
+        if self.get_age() == 17 and random() > 0.6 / factor:  # увеличиваем шанс с фактором
             self.education = 'HIGH SCHOOL'
         elif self.education == 'HIGH SCHOOL' and self.get_age() >= 18:
             r = random()
-            if r < 0.4:
-                self.education = 'College'
-            elif r < 0.6:
-                self.education = 'University'
+            college_chance = 0.4 * factor
+            university_chance = 0.2 * factor
 
-            elif r >= 0.4 and self.sex == 'male':
+            if r < college_chance:
+                self.education = 'College'
+            elif r < college_chance + university_chance:
+                self.education = 'University'
+            elif r >= college_chance and self.sex == 'male':
                 self.in_army = True
                 self.army_release_date = state.current_date + relativedelta(years=1)
                 self.work_place = 'Армия'
                 self.income = 10000
 
-        elif self.education == 'College' and random() < 0.2:
+        elif self.education == 'College' and random() < 0.2 * factor:
             self.education = 'University'
+
 
             
 
     def try_change_job(self):
         if self.pension:
             return
-        if random() <= 0.9:
+        if random() <= 0.8:
             return
         if self.get_age() < 14 or self.criminal_record:
             return
@@ -287,41 +333,52 @@ class Person:
         if 14 <= self.get_age() < 16 and randint(1,5) != 2:
             return
 
+        personality_salary_factor = {
+            'гипертим': 1.3,
+            'дистим': 0.7,
+            'эмотив': 1.1,
+            'эпилептоид': 0.9,
+            'тревожно-мнительный': 0.8,
+            'циклоид': 1.0,
+            'истероид': 1.0,
+            'вохбудимый': 1.2,
+            None: 1.0
+        }
+
+        factor = personality_salary_factor.get(self.temperament, 1.0)
 
         if self.get_age() >= 50:
-            k = - 1
+            k = -1
         else:
             k = 1
 
-        #cпекуляция
+        # Спекуляция
         if self.work_place in ['Госслужба', 'Бизнес'] and random() < 0.01:
-            self.income += randint(50000, 200000)
+            self.income += int(randint(50000, 200000) * factor)
             if random() < 0.2:
                 self.criminal_record = True
                 self.prison_release_date = state.current_date + relativedelta(years=3)
 
-
-        #new offer
+        # Новое предложение
         if random() >= 0.1:
             if self.work_place == 'IT-компания':
-                delta = randint(20000, 40000)
+                delta = int(randint(20000, 40000) * factor)
                 self.income += delta
             elif self.work_place == 'Завод':
-                delta = randint(2000, 10000)
+                delta = int(randint(2000, 10000) * factor)
                 self.income += delta
             elif self.work_place == 'Госслужба':
-                delta = randint(15000, 30000)
+                delta = int(randint(15000, 30000) * factor)
                 self.income += delta
             elif self.work_place == 'Фриланс':
-                delta = randint(1000, 40000)
+                delta = int(randint(1000, 40000) * factor)
                 self.income += delta
             elif self.work_place == 'Бизнес':
-                delta = randint(-100000, +200000)
+                delta = int(randint(-100000, +200000) * factor)
                 self.income += delta
             elif self.work_place == 'Учитель':
-                delta = randint(2000, 3000)
-                self.income += delta
-        
+                delta = int(randint(2000, 3000) * factor)
+                self.income += delta    
 
         else:
             chance = randint(1,6)
@@ -448,8 +505,9 @@ class Person:
                 work_place=None,
                 criminal_record=False,
                 credit_score=None,
-                partner_id=None
+                partner_id=None,
             )
+            child.temperament = self.temperament if random() < 0.5 else partner.temperament
             state.people.append(child)
 
     def count_children_with_partner(self):
@@ -657,8 +715,8 @@ class Person:
             print(f"{self.first_name} {self.last_name} выплатил по кредиту: {payment:.2f}")
 
     def add_procent(self):
-        self.balance = self.balance + (self.balance * state.key_court * 0.825)
-        self.balance *= uniform(0.9, 1.1)
+        self.balance = self.balance + (self.balance * state.key_court * 0.7)
+        self.balance *= uniform(0.87, 1.1)
 
     def index_salary(self):
         self.income *= (1 + state.salary_up)
