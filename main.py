@@ -95,7 +95,7 @@ dead_count = []
 net_worth_stats = []
 net_worth_by_age = [] 
 
-for month in range(12 * 300):
+for month in range(12 * 200):
     print(state.current_date)
     
     for person in list(state.people):  

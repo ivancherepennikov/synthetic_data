@@ -7,6 +7,7 @@ from person import(
 from names import male_names, female_names, patronymics_male, patronymics_female, last_names
 import datetime
 from tabulate import tabulate
+from personal_type import generate_personal_type
 
 
 def end_month():
@@ -73,6 +74,7 @@ def generate_random_person(id):
         credit_score=300,
         partner_id=None
     )
+    person.temperament = generate_personal_type()
     return person
 
 def display_people_table():
@@ -122,3 +124,5 @@ def display_people_table():
         "Работа", "Пенсия", "Судимость", "Кредит"
     ]
     print(tabulate(table_data, headers=headers, tablefmt="fancy_grid"))
+
+

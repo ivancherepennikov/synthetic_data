@@ -5,6 +5,7 @@ from random import random, randint, shuffle, choice, uniform
 from names import male_names, female_names, last_names
 import os
 import numpy as np
+from personal_type import get_temperament_divorce_adjust, personal_traits, pension_personality_mod
 
 base = np.random.normal(loc=500, scale=150)
 score = int(min(max(base, 200), 800))
@@ -297,7 +298,7 @@ class Person:
 
         if self.get_age() == 15:
             self.education = 'School'
-        if self.get_age() == 17 and random() > 0.6 / factor:  # увеличиваем шанс с фактором
+        if self.get_age() == 17 and random() > 0.6 / factor:  
             self.education = 'HIGH SCHOOL'
         elif self.education == 'HIGH SCHOOL' and self.get_age() >= 18:
             r = random()
@@ -330,30 +331,35 @@ class Person:
         days_since_last_change = (state.current_date - self.last_job_change_date).days
         if days_since_last_change < 365:
             return
-        if 14 <= self.get_age() < 16 and randint(1,5) != 2:
+        if 14 <= self.get_age() < 16 and randint(1, 5) != 2:
             return
 
-        personality_salary_factor = {
+        traits = personal_traits.get(self.temperament, {
+            'лидерство': 0.5,
+            'общительность': 0.5,
+            'стрессоустойчивость': 0.5,
+            'амбициозность': 0.5,
+            'добросовестность': 0.5 
+        })
+
+        base_salary_factor = {
             'гипертим': 1.3,
-            'дистим': 0.7,
+            'дистим': 0.65,
             'эмотив': 1.1,
-            'эпилептоид': 0.9,
-            'тревожно-мнительный': 0.8,
-            'циклоид': 1.0,
-            'истероид': 1.0,
-            'вохбудимый': 1.2,
+            'эпилептоид': 0.85,
+            'тревожно-мнительный': 0.7,
+            'истероид': 1.1,
             None: 1.0
         }
+        factor = base_salary_factor.get(self.temperament, 1.0)
+        factor *= 1 + traits['амбициозность'] * 0.2
+        if random() > (0.1 + traits['лидерство'] * 0.2 + traits['общительность'] * 0.1):
+            return
 
-        factor = personality_salary_factor.get(self.temperament, 1.0)
+        k = -1 if self.get_age() >= 45 else 1
 
-        if self.get_age() >= 50:
-            k = -1
-        else:
-            k = 1
-
-        # Спекуляция
-        if self.work_place in ['Госслужба', 'Бизнес'] and random() < 0.01:
+        # Спекуляция/коррупция
+        if self.work_place in ['Госслужба', 'Бизнес'] and random() < (0.01 * (1 - traits['добросовестность'])):
             self.income += int(randint(50000, 200000) * factor)
             if random() < 0.2:
                 self.criminal_record = True
@@ -374,61 +380,60 @@ class Person:
                 delta = int(randint(1000, 40000) * factor)
                 self.income += delta
             elif self.work_place == 'Бизнес':
-                delta = int(randint(-100000, +200000) * factor)
+                delta = int(randint(-150000, +300000) * factor)
                 self.income += delta
             elif self.work_place == 'Учитель':
                 delta = int(randint(2000, 3000) * factor)
                 self.income += delta    
-
         else:
-            chance = randint(1,6)
+            chance = randint(1, 6)
             if chance == 1 and self.education in ['College', 'University']:
-                if self.work_place == None:
-                    self.income = 60000
+                if self.work_place is None:
+                    self.income = 60000 * factor
                 else:
                     delta = randint(30000, 50000)
                     self.income += delta * k
                     self.last_job_change_date = state.current_date
                 self.work_place = 'IT-компания'
             elif chance == 2:
-                if self.work_place == None:
-                    self.income = 40000
+                if self.work_place is None:
+                    self.income = 40000 * factor
                 else:
                     delta = randint(2000, 4000)
                     self.income += delta * k
                     self.last_job_change_date = state.current_date
                 self.work_place = 'Завод'
-            if chance == 3 and self.education in ['HIGH SCHOOL', 'College', 'University']:
-                if self.work_place == None:
-                    self.income = 60000
+            elif chance == 3 and self.education in ['HIGH SCHOOL', 'College', 'University']:
+                if self.work_place is None:
+                    self.income = 60000 * factor
                 else:
                     if self.income <= 400000:
                         delta = randint(5000, 15000)
                     else:
-                        delta = randint(1000,2000)
-                        self.income += delta * k
-                        self.last_job_change_date = state.current_date
+                        delta = randint(1000, 2000)
+                    self.income += delta * k
+                    self.last_job_change_date = state.current_date
                 self.work_place = 'Госслужба'
-            if chance == 4:
-                if self.work_place == None:
-                    self.income = 35000
+            elif chance == 4:
+                if self.work_place is None:
+                    self.income = 35000 * factor
                 else:
                     delta = randint(1000, 35000)
                     self.income += delta * k
                     self.last_job_change_date = state.current_date
                 self.work_place = 'Фриланс'
-            if chance == 5:
-                if self.work_place == None:
-                    self.income = 10000
+            elif chance == 5:
+                if self.work_place is None:
+                    self.income = 10000 * factor
                     self.work_place = 'Бизнес'
-            if chance == 6 and self.education in ['College', 'University']:
-                if self.work_place == None:
-                    self.income = 30000
+            elif chance == 6 and self.education in ['College', 'University']:
+                if self.work_place is None:
+                    self.income = 30000 * factor
                 else:
                     delta = randint(1000, 35000)
                     self.income += delta * k
                     self.last_job_change_date = state.current_date
-                self.work_place = 'Учиетель'
+                self.work_place = 'Учитель'
 
         self.max_income = max(self.income, self.max_income)
 
@@ -461,10 +466,18 @@ class Person:
         if abs(self.income - partner.income) > 100000:
             divorce_chance += 0.002
 
+        temperament_scale = 0.9
+        divorce_chance += get_temperament_divorce_adjust(self.temperament, partner.temperament, scale=temperament_scale)
+
+        if hasattr(self, 'married_since') and self.married_since:
+            years_together = (state.current_date - self.married_since).days / 365.0
+            divorce_chance = max(0.0, divorce_chance - min(0.005, years_together * 0.0008))
+
         if random() < divorce_chance:
             print(f"{self.first_name} {self.last_name} развёлся с {partner.first_name} {partner.last_name}")
             self.partner_id = None
             partner.partner_id = None
+
 
 
     def try_have_children(self):
@@ -633,34 +646,48 @@ class Person:
     def go_to_pension(self):
         if self.pension:
             return
-        
-        if self.get_age() >= 65 and self.sex == 'male' and random() >= 0.85:
-            self.pension = True
-        elif self.get_age() >= 70 and self.sex == 'male' and random() >= 0.55:
-            self.pension = True
-        elif self.get_age() >= 75 and self.sex == 'male' and random() >= 0.25:
-            self.pension = True
-        elif self.get_age() >= 80 and self.sex == 'male' and random() >= 0.01:
-            self.pension = True
 
-        elif self.get_age() >= 60 and self.sex == 'female' and random() >= 0.85:
-            self.pension = True
-        elif self.get_age() >= 65 and self.sex == 'female' and random() >= 0.55:
-            self.pension = True
-        elif self.get_age() >= 70 and self.sex == 'female' and random() >= 0.25:
-            self.pension = True
-        elif self.get_age() >= 75 and self.sex == 'female' and random() >= 0.01:
-            self.pension = True
+        ptype = self.temperament.lower() if hasattr(self, 'temperament') else None
+        mod = pension_personality_mod.get(ptype, 1.0) 
+
+        age = self.get_age()
+        sex = self.sex
+
+        if sex == 'male':
+            if age >= 80 and random() >= 0.01 * mod:
+                self.pension = True
+            elif age >= 75 and random() >= 0.25 * mod:
+                self.pension = True
+            elif age >= 70 and random() >= 0.55 * mod:
+                self.pension = True
+            elif age >= 65 and random() >= 0.85 * mod:
+                self.pension = True
+
+        elif sex == 'female':
+            if age >= 75 and random() >= 0.01 * mod:
+                self.pension = True
+            elif age >= 70 and random() >= 0.25 * mod:
+                self.pension = True
+            elif age >= 65 and random() >= 0.55 * mod:
+                self.pension = True
+            elif age >= 60 and random() >= 0.85 * mod:
+                self.pension = True
 
         if self.pension:
             self.work_place = 'pension'
-            self.income = 15000 + self.max_income*0.4
+            self.income = 15000 + self.max_income * 0.4
+
 
 
     #debt
     def check_and_take_loan(self):
-        if self.balance < 0 and not self.gave_bribe:
-            loan_amount = -self.balance
+        max_loan = self.income * 12
+        if self.debt >= max_loan:
+            return
+        
+        if self.balance < -self.income * 3 and not self.gave_bribe: 
+            loan_amount = -self.balance * 0.8 
+            self.debt += loan_amount
             self.debt += loan_amount
             self.balance += loan_amount
             self.loans_taken += 1
@@ -715,8 +742,9 @@ class Person:
             print(f"{self.first_name} {self.last_name} выплатил по кредиту: {payment:.2f}")
 
     def add_procent(self):
+        self.balance *= uniform(0.9, 1.1)
         self.balance = self.balance + (self.balance * state.key_court * 0.7)
-        self.balance *= uniform(0.87, 1.1)
+        
 
     def index_salary(self):
         self.income *= (1 + state.salary_up)
