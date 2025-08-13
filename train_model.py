@@ -17,7 +17,7 @@ all_data = load_all_people_data("people_statistic")
 dataset = CreditSimulationDataset(all_data)
 print(f"Загружено записей: {len(dataset)}")
 
-# ===== 2. Разделяем на train/test =====
+# ===== 2. Разделяем на train/test ===== 
 train_size = int(0.9 * len(dataset))
 test_size = len(dataset) - train_size
 train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
@@ -55,7 +55,7 @@ model = CreditScoreModel(input_size=input_size).to(device)
 print(f"Модель инициализирована с {input_size} входными параметрами")
 
 loss_fn = nn.MSELoss()
-optimizer = optim.Adam(model.parameters(), lr=5e-4, weight_decay=1e-5)  # чуть меньше lr
+optimizer = optim.Adam(model.parameters(), lr=5e-4, weight_decay=1e-5)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=2, factor=0.5)
 
 epochs = 60 #больше как будто и не надо, максимум на 52 лучшую выдалвал
@@ -133,5 +133,5 @@ torch.save({
     'scaler_X': scaler_X,
     'scaler_y': scaler_y
 }, "final_credit_model.pth")
-print("\nОбучение завершено. Модель сохранена в final_credit_model.pth\nBest_loss:", best_loss, "\nbest_epoch:", best_epoch)
+print("\nОбучение завершено. Модель сохранена в final_credit_model.pth\nBest_loss:", best_loss, "\nbest_epoch:", best_epoch+1)
  
