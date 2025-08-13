@@ -6,5 +6,5 @@ people = []
 
 key_court = 0.01
 salary_up = 0.008
-max_population = 200
+max_population = 100
 logistic_r = 3.2 

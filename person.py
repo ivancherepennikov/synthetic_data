@@ -106,6 +106,9 @@ class Person:
 
         self.temperament = None
 
+        if self.in_army:
+            self.join_army()
+
 
 
     def get_age(self):
@@ -150,15 +153,8 @@ class Person:
             return
         
         if self.in_army:
-            if state.current_date >= self.army_release_date:
-                self.in_army = False
-                self.army_release_date = None
-                self.work_place = None
-                self.income = 0
-            else:
-                self.work_place = 'Армия'
-                self.income = 10000
-                return
+            self.military_service()
+            return
 
         self.check_prison_release()
 
@@ -168,24 +164,15 @@ class Person:
             return
 
         self.balance += self.income
-        if self.in_army:
-            pass
         
-        else:
-            if self.get_age() > 20 and not self.in_army:
-                expenses = self.spend_money_by_type()
-                self.balance -= expenses
-            elif self.get_age() > 20:
-                self.inheritance_account = getattr(self, 'inheritance_account', 0)
-                expenses = self.spend_money_by_type()
-                self.inheritance_account -= expenses
-
+        if self.get_age() > 20:
+            expenses = self.spend_money_by_type()
+            self.balance -= expenses
 
             if self.inheritance_account > 0 and self.get_age() >= 18:
                 print(f"{self.first_name} {self.last_name} получил наследство: {self.inheritance_account}")
                 self.balance += self.inheritance_account
                 self.inheritance_account = 0
-
 
         self.try_get_education()
         self.try_change_job()
@@ -224,15 +211,29 @@ class Person:
 
 
     def check_death(self, age):
+        base_death_chance = 0.0007
+        
+        if self.in_army:
+            base_death_chance = 0.0025
+            
+            if self.temperament == 'эпилептоид':
+                base_death_chance *= 0.7  
+            elif self.temperament == 'возбудимый':
+                base_death_chance *= 1.5 
+            elif self.temperament == 'тревожно-мнительный':
+                base_death_chance *= 0.5 
+
+            if random() < 0.05:
+                base_death_chance *= 2.5
+
         if age < 50:
-            base_death_chance = 0.0007
+            base_death_chance *= 1.0
         elif age < 70:
-            base_death_chance = 0.007
+            base_death_chance *= 10
         else:
             base_death_chance = 0.05 + (age - 70) * 0.003
 
         wealth_modifier = 1.0
-       
         if self.income > 100000:
             wealth_modifier -= 0.1
         elif self.income < 20000:
@@ -247,7 +248,6 @@ class Person:
             wealth_modifier += 0.1
 
         wealth_modifier = max(0.7, min(1.3, wealth_modifier))
-
         death_chance = base_death_chance * wealth_modifier
         death_boost = get_death_boost_factor()
         return random() < death_chance * death_boost
@@ -290,7 +290,7 @@ class Person:
             'тревожно-мнительный': 0.8,
             'циклоид': 1.0,
             'истероид': 1.0,
-            'вохбудимый': 1.1,
+            'возбудимый': 1.1,
             None: 1.0
         }
 
@@ -298,6 +298,12 @@ class Person:
 
         if self.get_age() == 15:
             self.education = 'School'
+        
+        if self.get_age() == 18 and self.sex == 'male' and not self.in_army:
+            if random() < 0.05:
+                self.join_army()
+                return
+                
         if self.get_age() == 17 and random() > 0.6 / factor:  
             self.education = 'HIGH SCHOOL'
         elif self.education == 'HIGH SCHOOL' and self.get_age() >= 18:
@@ -309,19 +315,19 @@ class Person:
                 self.education = 'College'
             elif r < college_chance + university_chance:
                 self.education = 'University'
-            elif r >= college_chance and self.sex == 'male':
-                self.in_army = True
-                self.army_release_date = state.current_date + relativedelta(years=1)
-                self.work_place = 'Армия'
-                self.income = 10000
+            elif self.sex == 'male' and not self.in_army and random() < 0.5:  # Дополнительный шанс призыва
+                self.join_army()
 
         elif self.education == 'College' and random() < 0.2 * factor:
             self.education = 'University'
 
 
+
             
 
     def try_change_job(self):
+        if self.in_army:
+            return
         if self.pension:
             return
         if random() <= 0.8:
@@ -439,6 +445,8 @@ class Person:
 
 
     def try_to_marry(self):
+        if self.in_army:
+            return
         if self.partner_id is not None or self.criminal_record and self.get_age() >= 16:
             return
         candidates = [p for p in state.people if p.id != self.id and p.partner_id is None and not p.dead and not p.criminal_record and p.get_age() > 18]
@@ -481,6 +489,9 @@ class Person:
 
 
     def try_have_children(self):
+        if self.in_army:
+            birth_boost = get_birth_boost_factor() * 0.9
+    
         if self.partner_id is None or self.get_age() < 16 or self.get_age() > 50 or self.criminal_record:
             return
 
@@ -489,7 +500,7 @@ class Person:
             return
         
         birth_boost = get_birth_boost_factor()
-        if random() < 0.005 * birth_boost:
+        if random() < 0.007 * birth_boost:
             partner = next((p for p in state.people if p.id == self.partner_id), None)
             if not partner:
                 return
@@ -546,7 +557,7 @@ class Person:
 
 
     def try_go_to_prison(self):
-        if not self.criminal_record and random() < 0.0005 and self.get_age() > 14:
+        if not self.criminal_record and random() < 0.0001 and self.get_age() > 14:
             self.criminal_record = True
             sentence_years = randint(2, 5)
             self.prison_release_date = state.current_date + relativedelta(years=sentence_years)
@@ -775,6 +786,36 @@ class Person:
             self.income = 0
 
         self.income = np.clip(self.income, -1e6, 1e6)
+
+
+    def init_military(self):
+        self.work_place = "Армия (контракт)"
+        self.income = 250000
+        self.army_release_date = None
+        self.army_rank = 1 
+        self.army_serve_years = 0
+
+
+    def military_service(self):
+        if state.current_date.month == 1 and state.current_date.day == 1:
+            self.army_serve_years += 1
+            self.income *= 1.1
+            if self.army_serve_years % 3 == 0 and self.army_rank < 10:
+                self.army_rank += 1
+                self.income += 50000 * self.army_rank
+                print(f"{self.first_name} {self.last_name} повышен до звания уровня {self.army_rank}!")
+        
+        self.balance += self.income
+        self.balance -= randint(20000, 50000)
+
+        if self.check_death(self.get_age()):
+            self.die()
+            return
+        
+    def join_army(self):
+        self.in_army = True
+        self.init_military()
+        print(f"{self.first_name} {self.last_name} призван в армию!")
 
 
 
