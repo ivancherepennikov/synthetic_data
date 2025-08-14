@@ -557,10 +557,68 @@ class Person:
 
 
     def try_go_to_prison(self):
+        """Попытка отправить персонажа в тюрьму"""
         if not self.criminal_record and random() < 0.0001 and self.get_age() > 14:
             self.criminal_record = True
-            sentence_years = randint(2, 5)
+            sentence_years = randint(1, 8)
+            
+            # Сначала пробуем уйти в армию
+            if (sentence_years <= 2 
+                and self.sex == 'male' 
+                and 18 <= self.get_age() <= 40
+                and not hasattr(self, 'repeat_offender')):
+                
+                if self.join_army(avoid_prison=True):
+                    return
+                    
+            # Если не получилось - устанавливаем срок
             self.prison_release_date = state.current_date + relativedelta(years=sentence_years)
+            print(f"{self.first_name} {self.last_name} приговорен к {sentence_years} годам тюрьмы")
+
+    def can_avoid_prison(self, sentence_years):
+        return (self.sex == 'male' 
+                and 18 <= self.get_age() <= 40
+                and sentence_years <= 2
+                and not hasattr(self, 'repeat_offender')
+                and not self.in_army)
+    
+    def join_army(self, avoid_prison=False):
+        """Вступление в армию с возможностью избежать тюрьмы"""
+        if self.in_army:
+            return False
+            
+        # Если пытаемся избежать тюрьмы - проверяем условия
+        if avoid_prison:
+            if not (self.sex == 'male' 
+                    and 18 <= self.get_age() <= 40
+                    and not hasattr(self, 'repeat_offender')):
+                return False
+                
+            # Шанс зависит от темперамента
+            base_chance = 0.7
+            if self.temperament == 'эпилептоид':
+                base_chance += 0.2
+            elif self.temperament == 'возбудимый':
+                base_chance -= 0.1
+                
+            if random() > max(0.1, min(0.9, base_chance)):
+                return False
+        
+        # Инициализация службы
+        self.in_army = True
+        self.init_military()
+        
+        # Если уходим от тюрьмы - очищаем судимость
+        if avoid_prison:
+            self.criminal_record = False
+            if hasattr(self, 'prison_release_date'):
+                del self.prison_release_date
+            print(f"{self.first_name} {self.last_name} избежал тюрьмы, отправившись в армию!")
+        else:
+            print(f"{self.first_name} {self.last_name} призван в армию!")
+        
+        return True
+
 
     def check_prison_release(self):
         if self.criminal_record and self.prison_release_date and state.current_date >= self.prison_release_date:
@@ -568,10 +626,26 @@ class Person:
             self.prison_release_date = None
 
     def check_prison_status(self):
-        if self.criminal_record and self.prison_release_date:
-            self.work_place = 'тюрьма'
-            self.income = 15000
-            self.criminal_record = True
+        """Проверка тюремного статуса"""
+        if self.criminal_record:
+            if hasattr(self, 'prison_release_date') and self.prison_release_date is not None:
+                # Попытка уйти в армию вместо тюрьмы
+                remaining_time = (self.prison_release_date - state.current_date).days / 365
+                if (remaining_time <= 2 
+                    and self.sex == 'male' 
+                    and 18 <= self.get_age() <= 40
+                    and not hasattr(self, 'repeat_offender')):
+                    
+                    if self.join_army(avoid_prison=True): 
+                        return
+                    
+                self.work_place = 'тюрьма'
+                self.income = 15000
+                print(f"{self.first_name} {self.last_name} в тюрьме, осталось {remaining_time:.1f} лет")
+            else:
+                self.work_place = 'тюрьма'
+                self.income = 15000
+                print(f"{self.first_name} {self.last_name} в тюрьме (срок не определен)")
 
     def update_credit_score(self):
         if self.dead or self.get_age() < 18:
@@ -812,10 +886,6 @@ class Person:
             self.die()
             return
         
-    def join_army(self):
-        self.in_army = True
-        self.init_military()
-        print(f"{self.first_name} {self.last_name} призван в армию!")
 
 
 
