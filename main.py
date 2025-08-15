@@ -9,6 +9,7 @@ import numpy as np
 import shutil
 import os
 import csv
+from person import update_inflation_index
 
 def setup_individual_logs():
     log_dir = "people_statistic"
@@ -37,6 +38,7 @@ def log_person_data(person):
         int(person.income),
         int(person.max_income),
         int(person.balance),
+
         int(person.debt),
         int(person.inheritance_account),
         int(person.monthly_payment),
@@ -95,8 +97,15 @@ dead_count = []
 net_worth_stats = []
 net_worth_by_age = [] 
 
-for month in range(12 * 500):
+age_list = []
+income_by_age = []
+alive_count = []
+net_worth_by_age = []
+total_capital_by_year = []
+
+for month in range(12 * state.years):
     print(state.current_date)
+    update_inflation_index()
     
     for person in list(state.people):  
         if not person.dead:
@@ -108,24 +117,29 @@ for month in range(12 * 500):
     if state.current_date.month == 1:
         current_alive = 0
         total_net_worth = 0
+        total_capital = 0
+        
         for p in state.people:
             if not p.dead:
                 current_alive += 1
                 age = p.get_age()
                 age_list.append(age)
                 income_by_age.append(p.income)
-                credit_by_age.append(p.credit_score)
-                net_worth = p.balance - p.debt
+                
+                net_worth = p.balance
                 net_worth_by_age.append((age, net_worth))
+                
                 total_net_worth += net_worth
+                total_capital += net_worth
+        
         alive_count.append(current_alive)
         avg_net_worth = total_net_worth / current_alive if current_alive > 0 else 0
         net_worth_stats.append(avg_net_worth)
-    
-    display_people_table()
+        total_capital_by_year.append(total_capital)
+
     end_month()
 
-sys.stdout.close()
+
 
 plt.figure(figsize=(16, 7))
 def calculate_averages(x_list, y_list):
@@ -147,7 +161,7 @@ plt.ylabel("Доход")
 plt.title("Доход по возрасту")
 plt.legend()
 
-# График 2 — Возраст и кредитный рейтинг
+'''# График 2 — Возраст и кредитный рейтинг
 plt.subplot(2, 2, 2)
 plt.scatter(age_list, credit_by_age, alpha=0.1, color='blue', label='Данные')
 avg_age, avg_credit = calculate_averages(age_list, credit_by_age)
@@ -155,6 +169,15 @@ plt.plot(avg_age, avg_credit, color='navy', linewidth=2, label='Средний �
 plt.xlabel("Возраст")
 plt.ylabel("Кредитный рейтинг")
 plt.title("Кредитный рейтинг по возрасту")
+plt.legend()'''
+
+# График 2 — Общий капитал по годам
+plt.subplot(2, 2, 2)
+years = list(range(len(total_capital_by_year)))
+plt.plot(years, total_capital_by_year, color='blue', linewidth=2, label="Общий капитал")
+plt.xlabel("Годы симуляции")
+plt.ylabel("Общий капитал (баланс - долг)")
+plt.title("Общий капитал всех людей")
 plt.legend()
 
 # График 3 — Живые по годам
@@ -181,3 +204,5 @@ plt.legend()
 plt.tight_layout()
 plt.savefig("stats.png", dpi=200)
 plt.show()
+
+sys.stdout.close()

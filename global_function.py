@@ -9,7 +9,6 @@ import datetime
 from tabulate import tabulate
 from personal_type import generate_personal_type
 
-
 def end_month():
     state.current_date += relativedelta(months = 1) 
 
@@ -39,12 +38,12 @@ def generate_random_person(id):
         last_name += 'a'
     patroyomic = generate_random_patronymic(sex)
 
-    age = randint(1, 70)
+    age = randint(1, 50)
     birth_date = state.current_date - datetime.timedelta(days=365 * age)
     
     if age >= 18:
         education = choice(['School', 'HIGH SCHOOL', 'College', 'University'])
-        income = randint(10000, 100000)
+        income = randint(100000, 500000)
         work_place = choice(['Завод', 'IT-компания', 'Госслужба', 'Фриланс', None])
         criminal = random() < 0.05
     else:
@@ -75,6 +74,7 @@ def generate_random_person(id):
         partner_id=None
     )
     person.temperament = generate_personal_type()
+    person.balance = 100_000
     return person
 
 def display_people_table():
