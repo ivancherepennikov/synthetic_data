@@ -38,7 +38,7 @@ def generate_random_person(id):
         last_name += 'a'
     patroyomic = generate_random_patronymic(sex)
 
-    age = randint(1, 50)
+    age = randint(10, 55)
     birth_date = state.current_date - datetime.timedelta(days=365 * age)
     
     if age >= 18:

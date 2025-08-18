@@ -192,8 +192,14 @@ class Person:
                 self.inheritance_account = 0
 
         if self.balance > 1e6:
-            tax = self.balance * 0.1 
+            tax = self.balance * 0.2
             self.balance -= tax
+
+        if self.balance > 1e7:
+            self.balance * 0.75
+
+        if self.balance < -1e6:
+            self.balance + 2e5
 
         self.try_get_education()
         self.try_change_job()
@@ -215,7 +221,7 @@ class Person:
         self.try_clear_credit_history()
 
         self.balance = np.clip(self.balance, -1e8, 1e8)
-        if self.balance < -1e8:
+        if self.balance < -5e7:
             self.dead = True
 
 
@@ -525,7 +531,7 @@ class Person:
             return
         
         birth_boost = get_birth_boost_factor()
-        if random() < 0.007 * birth_boost:
+        if random() < 0.0111 * birth_boost:
             partner = next((p for p in state.people if p.id == self.partner_id), None)
             if not partner:
                 return
@@ -915,6 +921,9 @@ class Person:
         """Инвестирование части сбережений"""
         if self.income < 20000:  
             return
+        
+        if self.balance >= 1e5:
+            self.balance *= random() + 0.3
             
         investment_ratio = {
             'гипертим': 0.4,
@@ -924,7 +933,7 @@ class Person:
         }.get(self.temperament, 0.2)
         
         if random() < 0.6: 
-            amount = self.balance / 2
+            amount = self.balance * 0.2
             risk = random()
             
             if risk > 0.2: 

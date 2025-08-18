@@ -18,6 +18,14 @@ def setup_individual_logs():
     os.makedirs(log_dir)
     return log_dir
 
+def safe_value(val):
+    if val is None:
+        return 0
+    val = float(val)
+    if np.isinf(val):
+        return np.finfo(np.float32).max * np.sign(val)
+    return val
+
 def log_person_data(person):
     filename = f"people_statistic/person_{person.id}.csv"
     write_headers = not os.path.exists(filename)
@@ -35,31 +43,31 @@ def log_person_data(person):
         age,
         person.education,
         
-        int(person.income),
-        int(person.max_income),
-        int(person.balance),
+        int(safe_value(person.income)),
+        int(safe_value(person.max_income)),
+        int(safe_value(person.balance)),
 
-        int(person.debt),
-        int(person.inheritance_account),
-        int(person.monthly_payment),
-        person.loans_taken,
-        person.monthly_interest_rate,
+        int(safe_value(person.debt)),
+        int(safe_value(person.inheritance_account)),
+        int(safe_value(person.monthly_payment)),
+        safe_value(person.loans_taken),
+        safe_value(person.monthly_interest_rate),
         
-        person.missed_payments,
-        int(person.cleared_credit),
+        safe_value(person.missed_payments),
+        int(safe_value(person.cleared_credit)),
         
         person.work_place,
         days_on_job,
-        int(person.pension),
-        int(person.in_army),
+        int(safe_value(person.pension)),
+        int(safe_value(person.in_army)),
         
-        int(person.criminal_record),
-        int(person.gave_bribe),
+        int(safe_value(person.criminal_record)),
+        int(safe_value(person.gave_bribe)),
         
         marital_status,
         person.temperament,
         
-        int(person.credit_score) if person.credit_score is not None else 0
+        int(safe_value(person.credit_score))
     ]
 
     headers = [
@@ -79,6 +87,7 @@ def log_person_data(person):
         if write_headers:
             writer.writerow(headers)
         writer.writerow(row)
+
 
 
 sys.stdout = open("output.txt", "w", encoding="utf-8")
