@@ -38,7 +38,7 @@ def generate_random_person(id):
         last_name += 'a'
     patroyomic = generate_random_patronymic(sex)
 
-    age = randint(10, 55)
+    age = randint(18, 70)
     birth_date = state.current_date - datetime.timedelta(days=365 * age)
     
     if age >= 18:
@@ -74,7 +74,7 @@ def generate_random_person(id):
         partner_id=None
     )
     person.temperament = generate_personal_type()
-    person.balance = 100_000
+    person.balance = 1_000_000
     return person
 
 def display_people_table():

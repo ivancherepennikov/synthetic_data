@@ -6,6 +6,7 @@ from names import male_names, female_names, last_names
 import os
 import numpy as np
 from personal_type import get_temperament_divorce_adjust, personal_traits, pension_personality_mod
+from decimal import Decimal, getcontext
 
 base = np.random.normal(loc=500, scale=150)
 score = int(min(max(base, 200), 800))
@@ -56,6 +57,15 @@ def update_inflation_index():
     month_factor = P_now / P_prev
     state.inflation_index *= month_factor
     state.inflation_year += 1/12
+
+def update_salary_up_index():
+    """Обновляет индекс инфляции на основе циклической модели."""
+    y = state.salary_up_year
+    P_now = (1 + state.salary_up_r) ** y * (1 + state.salary_up_A * np.sin(2 * np.pi * y / state.salary_up_T))
+    P_prev = (1 + state.salary_up_r) ** (y - 1/12) * (1 + state.salary_up_A * np.sin(2 * np.pi * (y - 1/12) / state.salary_up_T))
+    month_factor = P_now / P_prev
+    state.salary_up_index *= month_factor 
+    state.salary_up_year += 1/12
 
 def setup_logging():
     log_dir = "people_statistic"
@@ -177,8 +187,13 @@ class Person:
         if self.check_death(age):
             self.die()
             return
+        
+        if self.income < state.MAX_INCOME:
+            self.income *= state.salary_up_index
+        else:
+            self.income = state.MAX_INCOME
 
-        self.balance += (self.income * self.boost)
+        self.balance += self.income
         
         if self.get_age() > 20:
             self.apply_inflation_to_expenses() 
@@ -191,15 +206,42 @@ class Person:
                 self.balance += self.inheritance_account
                 self.inheritance_account = 0
 
-        if self.balance > 1e6:
-            tax = self.balance * 0.2
-            self.balance -= tax
+        if self.get_age() <= 18:
+            self.balance = 0
+            self.debt = 0
+            self.loans_taken = 0
 
-        if self.balance > 1e7:
-            self.balance * 0.75
+        if self.balance <= 0 and self.get_age() <= 23:
+            self.balance += 5e4
+
+        if self.balance > 1e5:
+            tax = self.balance * 0.15
+            self.balance -= tax
+            state.inflation_index *= 1.000000001
+
+        if self.balance > 1e6:
+            tax = self.balance * 0.25
+            self.balance -= tax
+            state.inflation_index *= 1.00000001
+
+        if self.balance >= 1e7:
+            tax = self.balance * 0.35
+            self.balance -= tax
+            state.inflation_index *= 1.0000001
 
         if self.balance < -1e6:
-            self.balance + 2e5
+            self.balance += 1e5
+
+
+        if self.balance <= - 9e7:
+            chance = random()
+            if chance < 00.5:
+                self.dead = True
+            elif chance >= 0.9:
+                self.balance = 0
+            else:
+                self.balance += 1e4
+
 
         self.try_get_education()
         self.try_change_job()
@@ -221,8 +263,6 @@ class Person:
         self.try_clear_credit_history()
 
         self.balance = np.clip(self.balance, -1e8, 1e8)
-        if self.balance < -5e7:
-            self.dead = True
 
 
         '''log_path = os.path.join("people_statistic", f"person_{self.id}.txt")
@@ -243,10 +283,10 @@ class Person:
 
 
     def check_death(self, age):
-        base_death_chance = 0.0007
+        base_death_chance = 0.001
         
         if self.in_army:
-            base_death_chance = 0.0025
+            base_death_chance = 0.002
             
             if self.temperament == 'эпилептоид':
                 base_death_chance *= 0.7  
@@ -258,12 +298,12 @@ class Person:
             if random() < 0.05:
                 base_death_chance *= 2.5
 
-        if age < 50:
+        if age < 55:
             base_death_chance *= 1.0
-        elif age < 70:
+        elif age < 75:
             base_death_chance *= 10
         else:
-            base_death_chance = 0.05 + (age - 70) * 0.003
+            base_death_chance = 0.025 + (age - 70) * 0.002
 
         wealth_modifier = 1.0
         if self.income > 100000:
@@ -405,22 +445,22 @@ class Person:
         # Новое предложение
         if random() >= 0.1:
             if self.work_place == 'IT-компания':
-                delta = int(randint(20000, 40000) * factor) * (state.salary_up + 1)
+                delta = int(randint(20000, 40000) * factor) * (state.salary_up_index + 1)
                 self.income += delta
             elif self.work_place == 'Завод':
-                delta = int(randint(2000, 10000) * factor) * (state.salary_up + 1)
+                delta = int(randint(2000, 10000) * factor) * (state.salary_up_index + 1)
                 self.income += delta
             elif self.work_place == 'Госслужба':
-                delta = int(randint(15000, 30000) * factor) * (state.salary_up + 1)
+                delta = int(randint(15000, 30000) * factor) * (state.salary_up_index + 1)
                 self.income += delta
             elif self.work_place == 'Фриланс':
-                delta = int(randint(1000, 40000) * factor) * (state.salary_up + 1)
+                delta = int(randint(1000, 40000) * factor) * (state.salary_up_index + 1)
                 self.income += delta
             elif self.work_place == 'Бизнес':
-                delta = int(randint(-150000, +300000) * factor) * (state.salary_up + 1)
+                delta = int(randint(-150000, +300000) * factor) * (state.salary_up_index + 1)
                 self.income += delta
             elif self.work_place == 'Учитель':
-                delta = int(randint(2000, 3000) * factor) * (state.salary_up + 1)
+                delta = int(randint(2000, 3000) * factor) * (state.salary_up_index + 1)
                 self.income += delta 
         else:
             chance = randint(1, 6)
@@ -483,7 +523,7 @@ class Person:
         candidates = [p for p in state.people if p.id != self.id and p.partner_id is None and not p.dead and not p.criminal_record and p.get_age() > 18]
         shuffle(candidates)
         for candidate in candidates:
-            if candidate.sex != self.sex and random() < 0.2:
+            if candidate.sex != self.sex and random() < 0.4:
                 self.partner_id = candidate.id
                 candidate.partner_id = self.id
                 print(state.current_date)
@@ -521,7 +561,7 @@ class Person:
 
     def try_have_children(self):
         if self.in_army:
-            birth_boost = get_birth_boost_factor() * 0.9
+            birth_boost = get_birth_boost_factor() * 0.7
     
         if self.partner_id is None or self.get_age() < 16 or self.get_age() > 50 or self.criminal_record:
             return
@@ -531,7 +571,7 @@ class Person:
             return
         
         birth_boost = get_birth_boost_factor()
-        if random() < 0.0111 * birth_boost:
+        if random() < 0.02 * birth_boost:
             partner = next((p for p in state.people if p.id == self.partner_id), None)
             if not partner:
                 return
@@ -619,14 +659,12 @@ class Person:
         if self.in_army:
             return False
             
-        # Если пытаемся избежать тюрьмы - проверяем условия
         if avoid_prison:
             if not (self.sex == 'male' 
                     and 18 <= self.get_age() <= 40
                     and not hasattr(self, 'repeat_offender')):
                 return False
                 
-            # Шанс зависит от темперамента
             base_chance = 0.7
             if self.temperament == 'эпилептоид':
                 base_chance += 0.2
@@ -636,7 +674,6 @@ class Person:
             if random() > max(0.1, min(0.9, base_chance)):
                 return False
         
-        # Инициализация службы
         self.in_army = True
         self.init_military()
         
@@ -721,7 +758,7 @@ class Person:
         raw_score += np.random.normal(0, 0.1)
 
         final_score = np.clip((raw_score + 1) / 2, 0, 1)
-        self.credit_score = int(final_score * 999)
+        self.credit_score = int(np.nan_to_num(final_score) * 999)
 
 
     def try_bribe(self):
@@ -801,7 +838,9 @@ class Person:
         max_loan = self.income * 12
         if self.debt >= max_loan:
             return
-        
+
+        self.balance = int(self.balance)
+        self.income = int(self.income)
         if self.balance < -self.income * 3 and not self.gave_bribe: 
             loan_amount = -self.balance * 0.8 
             self.debt += loan_amount
@@ -932,8 +971,8 @@ class Person:
             None: 0.2
         }.get(self.temperament, 0.2)
         
-        if random() < 0.6: 
-            amount = self.balance * 0.2
+        if random() < 0.8: 
+            amount = self.balance * 0.5
             risk = random()
             
             if risk > 0.2: 

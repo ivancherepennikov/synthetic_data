@@ -9,7 +9,7 @@ import numpy as np
 import shutil
 import os
 import csv
-from person import update_inflation_index
+from person import update_inflation_index, update_salary_up_index
 
 def setup_individual_logs():
     log_dir = "people_statistic"
@@ -111,10 +111,13 @@ income_by_age = []
 alive_count = []
 net_worth_by_age = []
 total_capital_by_year = []
+inflation_by_year = []
+
 
 for month in range(12 * state.years):
     print(state.current_date)
     update_inflation_index()
+    update_salary_up_index()
     
     for person in list(state.people):  
         if not person.dead:
@@ -127,6 +130,7 @@ for month in range(12 * state.years):
         current_alive = 0
         total_net_worth = 0
         total_capital = 0
+        inflation_by_year.append(state.inflation_index)
         
         for p in state.people:
             if not p.dead:
@@ -160,7 +164,7 @@ def calculate_averages(x_list, y_list):
     avg_y = [np.mean([v for v in grouped[x] if v is not None]) for x in avg_x]
     return avg_x, avg_y
 
-# График 1 — Возраст и доход
+'''# График 1 — Возраст и доход
 plt.subplot(2, 2, 1)
 plt.scatter(age_list, income_by_age, alpha=0.1, color='green', label='Данные')
 avg_age, avg_income = calculate_averages(age_list, income_by_age)
@@ -168,7 +172,17 @@ plt.plot(avg_age, avg_income, color='darkgreen', linewidth=2, label='Средн�
 plt.xlabel("Возраст")
 plt.ylabel("Доход")
 plt.title("Доход по возрасту")
+plt.legend()'''
+
+# График 1 — Инфляция по годам
+plt.subplot(2, 2, 1)
+years = list(range(len(inflation_by_year)))
+plt.plot(years, inflation_by_year, color='orange', linewidth=2, label="Инфляция")
+plt.xlabel("Годы симуляции")
+plt.ylabel("Инфляционный индекс")
+plt.title("Инфляция по годам")
 plt.legend()
+
 
 '''# График 2 — Возраст и кредитный рейтинг
 plt.subplot(2, 2, 2)
