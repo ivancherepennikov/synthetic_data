@@ -82,4 +82,9 @@ Credit score is updated dynamically based on:
 - 🧾 Loan history  
 - 🎲 Random risk factors  
 
-🔢 **Final credit score is scaled between 0 and 999**
+### 🛢️ Economy & Resources
+- 🛢️ Oil as a limited resource affecting the economy
+- 📉 Low oil supply causes inflation, higher living costs, and reduced credit availability
+- 💹 Oil prices influence income and financial decisions of all agents
+- 🔄 Oil reserves are updated dynamically each simulation cycle
+- 🔢 **Final credit score is scaled between 0 and 999**
