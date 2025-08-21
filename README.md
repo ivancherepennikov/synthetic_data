@@ -80,7 +80,9 @@ Credit score is updated dynamically based on:
 - 🎓 Education level  
 - 👶 Age  
 - 🧾 Loan history  
-- 🎲 Random risk factors  
+- 🎲 Random risk factors
+
+---
 
 ### 🛢️ Economy & Resources
 - 🛢️ Oil as a limited resource affecting the economy
