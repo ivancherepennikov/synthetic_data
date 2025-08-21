@@ -124,6 +124,8 @@ class Person:
         self.temperament = None
         self.boost = 1.0
 
+        self.have_car = False
+
         if self.in_army:
             self.join_army()
 
@@ -242,6 +244,18 @@ class Person:
             else:
                 self.balance += 1e4
 
+        state.oil_in_simulation = state.oil_amount_per_person/2
+
+        if self.get_age() >= 18 and self.balance >= 1e7:
+            self.have_car = True
+            state.car_amaunt += 1
+            self.balance -= 7e6
+            print("машин сейчас: ", state.car_amaunt)
+
+        if self.have_car == True:
+            state.oil_in_simulation -= 0.0001
+
+        state.inflation_index = (state.inflation_index * 0.0000001 * state.oil_in_simulation / 198968) + state.inflation_index
 
         self.try_get_education()
         self.try_change_job()
@@ -284,9 +298,11 @@ class Person:
 
     def check_death(self, age):
         base_death_chance = 0.001
+        if self.have_car:
+            base_death_chance *= 2
         
         if self.in_army:
-            base_death_chance = 0.002
+            base_death_chance = 0.003
             
             if self.temperament == 'эпилептоид':
                 base_death_chance *= 0.7  
@@ -571,7 +587,7 @@ class Person:
             return
         
         birth_boost = get_birth_boost_factor()
-        if random() < 0.02 * birth_boost:
+        if random() < 0.015 * birth_boost:
             partner = next((p for p in state.people if p.id == self.partner_id), None)
             if not partner:
                 return
@@ -755,7 +771,9 @@ class Person:
             raw_score += np.random.uniform(0.5, 1.0)
 
  
-        raw_score += np.random.normal(0, 0.1)
+        raw_score += np.random.normal(0, 0.1)   
+        if self.have_car:
+            raw_score += 50 
 
         final_score = np.clip((raw_score + 1) / 2, 0, 1)
         self.credit_score = int(np.nan_to_num(final_score) * 999)

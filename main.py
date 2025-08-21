@@ -66,6 +66,7 @@ def log_person_data(person):
         
         marital_status,
         person.temperament,
+        int(person.have_car),
         
         int(safe_value(person.credit_score))
     ]
@@ -78,7 +79,7 @@ def log_person_data(person):
         "missed_payments", "cleared_credit",
         "Работа", "ДнейНаРаботе", "Пенсионер", "ВАрмии",
         "Судимость", "gave_bribe",
-        "СемейноеПоложение", "ТипЛичности",
+        "СемейноеПоложение", "ТипЛичности", "Машина",
         "КредитОчки"
     ]
 

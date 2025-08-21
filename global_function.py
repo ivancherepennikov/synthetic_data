@@ -75,6 +75,9 @@ def generate_random_person(id):
     )
     person.temperament = generate_personal_type()
     person.balance = 1_000_000
+    if random() >= 0.5:
+        person.have_car = True
+        
     return person
 
 def display_people_table():
