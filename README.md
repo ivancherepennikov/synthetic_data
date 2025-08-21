@@ -23,7 +23,7 @@ This project presents a credit scoring model trained entirely on synthetic data 
 ### 📦 Trained Model
 
 - `final_credit_model.pth` — the final trained model.
-  - Trained over **100 epochs**
+  - Trained **60 epochs**
   - **Best achieved loss:** `0.0831`
 
 ## 🧠 Simulated Person Behavior
