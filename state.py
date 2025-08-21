@@ -4,8 +4,8 @@ current_date = datetime(year = 2025, month = 7, day = 23)
 
 people = []
 
-years = 300
-max_population = 100
+years = 1000
+max_population = 500
 logistic_r = 3.2
 key_court = 0.1
 

@@ -32,7 +32,7 @@ y_test = np.array([y.numpy() for _, y in test_dataset])
 # ===== 4. Нормализация признаков и таргета =====
 scaler_X = StandardScaler()
 scaler_y = StandardScaler()
-
+ 
 X_train = scaler_X.fit_transform(X_train)
 X_test = scaler_X.transform(X_test)
 

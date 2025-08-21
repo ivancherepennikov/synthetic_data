@@ -219,17 +219,17 @@ class Person:
         if self.balance > 1e5:
             tax = self.balance * 0.15
             self.balance -= tax
-            state.inflation_index *= 1.000000001
+            state.inflation_index *= 1.00000003
 
         if self.balance > 1e6:
             tax = self.balance * 0.25
             self.balance -= tax
-            state.inflation_index *= 1.00000001
+            state.inflation_index *= 1.0000003
 
         if self.balance >= 1e7:
             tax = self.balance * 0.35
             self.balance -= tax
-            state.inflation_index *= 1.0000001
+            state.inflation_index *= 1.000003
 
         if self.balance < -1e6:
             self.balance += 1e5
